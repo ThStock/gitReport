@@ -15,13 +15,9 @@ class RepoAnalyzer(repo:File, commitLimit:Int) {
     .findGitDir()
     .build()
 
-  def name:String = {
-    val name = repo.getName
-    if (name == ".git") {
-      return repo.getParent + name
-    } else {
-      return name
-    }
+  def name(dir:File = repo):String = dir.getName match {
+    case ".git" => name(dir.getParentFile)
+    case dirName => dirName
   }
 
   def getChanges():Seq[Change] = {

@@ -16,15 +16,23 @@ object Reporter extends App {
 
   val displayLimit = argsOpt(0).getOrElse("200").toInt
   val repos = new File(argsOpt(1).getOrElse("../"))
-  val commitLimit = 200
+  val commitLimit = argsOpt(2).getOrElse("200").toInt
 
-  val dirs = repos.listFiles.toSeq.filter(f => f.isDirectory)
-
-  val repoDirs:Seq[File] = dirs.map(dir => new File(dir, ".git"))
-    .filter(_.isDirectory)
+  def findRecursiv(file:File, filter:File => Boolean):Seq[File] = {
+    val files = file.listFiles
+    return files.filter(filter) match {
+      case notFound if notFound.isEmpty => {
+        files.filter(_.isDirectory)
+          .flatMap(findRecursiv(_,filter))
+      }
+      case found => found
+    }
+  }
+  def isGitDir(f:File):Boolean = f.isDirectory && f.getName == ".git"
+  val repoDirs:Seq[File] = findRecursiv(repos, isGitDir)
 
   case class VisibleChange(author:Contributor, contributors:Seq[Contributor],
-    commitTime:Int) {
+    commitTime:Int, repoName:String) {
     import java.text.SimpleDateFormat
     import java.util.Date
 
@@ -41,15 +49,19 @@ object Reporter extends App {
       case c if c.size >= 2 => "ok"
       case _ => "warn"
     }
+    def formatDate(date:Int) = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+      .format(new Date(date * 1000L))
 
-    val title = "Time: " + new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
-      .format(new Date(commitTime * 1000L))
+    val title = """|
+      |Time: %s
+      |Repo: %s
+      |""".stripMargin.trim.format(formatDate(commitTime), repoName)
   }
 
   val changes:Seq[VisibleChange] = repoDirs.sorted.map{ repo =>
     val analy = new RepoAnalyzer(repo, commitLimit)
     val allChanges:Seq[Change] = analy.getChanges()
-    def toVisChange(change:Change):VisibleChange = {
+    def toVisChange(repoName:String)(change:Change):VisibleChange = {
       val author = Contributor(change.authorEmail, "author")
       // TODO handle SignedOfBy
       val reviewers:Seq[FooterElement] = change.footer
@@ -57,10 +69,10 @@ object Reporter extends App {
 
       val contribs:Seq[Contributor] = reviewers
         .map(foot => Contributor(foot.email.getOrElse(foot.value), foot.key))
-      return VisibleChange(author, contribs, change.commitTime)
+      return VisibleChange(author, contribs, change.commitTime, repoName)
     }
 
-    val result:Seq[VisibleChange] = allChanges.map(toVisChange)
+    val result:Seq[VisibleChange] = allChanges.map(toVisChange(analy.name()))
     result
   }.flatten
 
