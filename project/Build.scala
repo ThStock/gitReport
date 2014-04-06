@@ -4,7 +4,7 @@ import Keys._
 object ProjectBuild extends Build {
 
   override lazy val settings = super.settings ++
-  Seq(scalaVersion := "2.10.3", resolvers := Seq())
+  Seq(scalaVersion := "2.10.4", resolvers := Seq())
 
   val appDependencies = Seq(
     "org.eclipse.jgit" % "org.eclipse.jgit" % "3.2.0.201312181205-r",
