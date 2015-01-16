@@ -1,8 +1,9 @@
-import org.fusesource.scalate.TemplateEngine
+import com.gilt.handlebars.scala.binding.dynamic._
+import com.gilt.handlebars.scala.Handlebars
 import java.io.File
 import java.util.Date
 import java.text.SimpleDateFormat
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import ChangeTypes._
 
 class ReportGenerator(changes:Seq[VisibleChange]) {
@@ -23,9 +24,9 @@ class ReportGenerator(changes:Seq[VisibleChange]) {
   }
 
   private def writeByName(reportFileName:String, content:Any) {
-    val engine = new TemplateEngine
+
     val text = scala.io.Source.fromFile("src/main/resources/" + reportFileName + ".mu").mkString
-    val template = engine.compileMoustache(text)
+    val template = Handlebars(text)
 
     val outputDir = new File("out")
     if (!outputDir.isDirectory) {
@@ -37,7 +38,7 @@ class ReportGenerator(changes:Seq[VisibleChange]) {
       "reportDate" -> ReportGenerator.formatedDate(new Date())
     )
 
-    RepoAnalyzer.writeToFile(engine.layout("", template, contentMap), new File(outputDir, reportFileName + ".html"))
+    RepoAnalyzer.writeToFile(template(contentMap), new File(outputDir, reportFileName + ".html"))
   }
 
 }
