@@ -32,7 +32,9 @@ object Reporter extends App {
   def isGitDir(f:File):Boolean = f.isDirectory && f.getName == ".git"
   val repoDirs:Seq[File] = findRecursiv(repos, isGitDir)
 
-  val changes:Seq[VisibleChange] = repoDirs.sorted.map{ repo =>
+  val t1 = System.currentTimeMillis()
+
+  val changes:Seq[VisibleChange] = repoDirs.par.map{ repo =>
     println("scanning: " + repo)
     val analy = new RepoAnalyzer(repo, commitLimit)
     val allChanges:Seq[Change] = analy.getChanges()
@@ -49,8 +51,9 @@ object Reporter extends App {
 
     val result:Seq[VisibleChange] = allChanges.map(toVisChange(analy.name()))
     result
-  }.flatten
+  }.toList.flatten
 
+  val t2 = System.currentTimeMillis()
   new ReportGenerator(changes).write(displayLimit)
-
+  println("reports generated in " + (t2 - t1) + " (ms)")
 }
