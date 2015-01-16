@@ -23,8 +23,9 @@ class ReportGenerator(changes:Seq[VisibleChange]) {
   }
 
   private def writeByName(reportFileName:String, content:Any) {
+    val fileName = reportFileName + ".mu"
 
-    val text = scala.io.Source.fromFile("src/main/resources/" + reportFileName + ".mu").mkString
+    val text = io.Source.fromInputStream(getClass.getResourceAsStream(fileName)).mkString
     val template = Handlebars(text)
 
     val outputDir = new File("out")
@@ -36,8 +37,9 @@ class ReportGenerator(changes:Seq[VisibleChange]) {
       "content" -> content,
       "reportDate" -> ReportGenerator.formatedDate(new Date())
     )
-
-    RepoAnalyzer.writeToFile(template(contentMap), new File(outputDir, reportFileName + ".html"))
+    val outputFile = new File(outputDir, reportFileName + ".html")
+    RepoAnalyzer.writeToFile(template(contentMap), outputFile)
+    println("written: " + outputFile.getAbsolutePath)
   }
 
 }

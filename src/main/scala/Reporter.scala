@@ -15,9 +15,9 @@ object Reporter extends App {
       case _                     => None
     }
 
-  val displayLimit = argsOpt(0).getOrElse("700").toInt
-  val repos = new File(argsOpt(1).getOrElse("../"))
-  val commitLimit = argsOpt(2).getOrElse("1200").toInt
+  val repos = new File(argsOpt(0).getOrElse("../"))
+  val commitLimit = argsOpt(1).getOrElse("1200").toInt
+  val displayLimit = argsOpt(2).getOrElse("700").toInt
 
   def findRecursiv(file:File, filter:File => Boolean):Seq[File] = {
     val files = file.listFiles
