@@ -17,9 +17,9 @@ object Reporter extends App {
       case _                     => None
     }
 
-  val displayLimit = argsOpt(0).getOrElse("200").toInt
+  val displayLimit = argsOpt(0).getOrElse("700").toInt
   val repos = new File(argsOpt(1).getOrElse("../"))
-  val commitLimit = argsOpt(2).getOrElse("200").toInt
+  val commitLimit = argsOpt(2).getOrElse("1200").toInt
 
   def findRecursiv(file:File, filter:File => Boolean):Seq[File] = {
     val files = file.listFiles
@@ -33,6 +33,10 @@ object Reporter extends App {
   }
   def isGitDir(f:File):Boolean = f.isDirectory && f.getName == ".git"
   val repoDirs:Seq[File] = findRecursiv(repos, isGitDir)
+
+  private def formatedDate(date:Date):String = {
+    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(date)
+  }
 
   case class VisibleChange(author:Contributor, contributors:Seq[Contributor],
     commitTime:Int, repoName:String) {
@@ -50,8 +54,7 @@ object Reporter extends App {
       case c if c.size >= 2 => "ok"
       case _ => "warn"
     }
-    def formatDate(date:Int) = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
-      .format(new Date(date * 1000L))
+    def formatDate(date:Int) = formatedDate(new Date(date * 1000L))
 
     val title = """|
       |Time: %s
@@ -60,6 +63,7 @@ object Reporter extends App {
   }
 
   val changes:Seq[VisibleChange] = repoDirs.sorted.map{ repo =>
+    println(repo)
     val analy = new RepoAnalyzer(repo, commitLimit)
     val allChanges:Seq[Change] = analy.getChanges()
     def toVisChange(repoName:String)(change:Change):VisibleChange = {
@@ -77,14 +81,20 @@ object Reporter extends App {
     result
   }.flatten
 
-  val text = scala.io.Source.fromFile("src/main/resources/index.mu").mkString
+
+  val text = scala.io.Source.fromFile("src/main/resources/truckMap.mu").mkString
   val content = changes.sortWith(_.commitTime > _.commitTime)
     .take(displayLimit)
 
   val engine = new TemplateEngine
   val template = engine.compileMoustache(text)
 
-  writeToFile(engine.layout("",template, Map("content" -> content)), new File("index.html"))
+  val outputDir = new File("out")
+  if (!outputDir.isDirectory) {
+    outputDir.mkdir()
+  }
+  writeToFile(engine.layout("",template, Map("content" -> content, "reportDate" -> formatedDate(new Date()))),
+    new File(outputDir, "truckMap.html"))
 
   case class Contributor(email:String, typ:String) {
     val hash = md5(email)
