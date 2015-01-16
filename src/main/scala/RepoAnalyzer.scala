@@ -6,9 +6,9 @@ import org.eclipse.jgit.api._
 import org.eclipse.jgit.revwalk._
 import org.eclipse.jgit.diff._
 import org.eclipse.jgit.util.io._
+import RepoAnalyzer._
 
 class RepoAnalyzer(repo:File, commitLimit:Int) {
-  import RepoAnalyzer._
 
   val repository:Repository = new FileRepositoryBuilder().setGitDir(repo)
     .readEnvironment()
@@ -65,8 +65,8 @@ class RepoAnalyzer(repo:File, commitLimit:Int) {
     }
   }
 }
+
 object RepoAnalyzer {
-  import java.security.MessageDigest
 
   def writeToFile( s: String, file:File) {
     val out = new PrintWriter(file, "UTF-8")
@@ -74,7 +74,7 @@ object RepoAnalyzer {
       finally{ out.close }
   }
 
-  def md5(s: String) = MessageDigest.getInstance("MD5")
+  def md5(s: String) = java.security.MessageDigest.getInstance("MD5")
       .digest(s.getBytes).map("%02x".format(_)).mkString
 
   case class FooterElement(key:String, value:String) {

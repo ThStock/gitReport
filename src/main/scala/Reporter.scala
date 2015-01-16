@@ -1,8 +1,11 @@
 import java.io._
+import RepoAnalyzer._
+import org.fusesource.scalate.TemplateEngine
+import java.text.SimpleDateFormat
+import java.util.Date
+
 
 object Reporter extends App {
-  import RepoAnalyzer._
-
   /*
    * git config --add remote.origin.fetch +refs/notes/review:refs/notes/review
    * git config notes.displayRef refs/notes/review
@@ -33,8 +36,6 @@ object Reporter extends App {
 
   case class VisibleChange(author:Contributor, contributors:Seq[Contributor],
     commitTime:Int, repoName:String) {
-    import java.text.SimpleDateFormat
-    import java.util.Date
 
     val members = contributors :+ author
 
@@ -80,7 +81,6 @@ object Reporter extends App {
   val content = changes.sortWith(_.commitTime > _.commitTime)
     .take(displayLimit)
 
-  import org.fusesource.scalate.TemplateEngine
   val engine = new TemplateEngine
   val template = engine.compileMoustache(text)
 
