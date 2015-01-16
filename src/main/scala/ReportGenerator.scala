@@ -10,7 +10,6 @@ class ReportGenerator(changes:Seq[VisibleChange]) {
 
   def write(displayLimit:Int) {
     val content = changes
-      .sortWith(_.commitTime > _.commitTime)
       .take(displayLimit)
 
     writeByName("truckMap", content)

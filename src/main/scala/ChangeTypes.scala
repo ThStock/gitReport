@@ -56,5 +56,9 @@ object ChangeTypes {
       result.toInt
     }
 
+    val members:Seq[Contributor] = changes.flatMap(_.members)
+      .map(_.copy(typ = "player"))
+      .toSet.toSeq.sortWith(_.email < _.email)
+
   }
 }

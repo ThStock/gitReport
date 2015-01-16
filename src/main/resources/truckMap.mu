@@ -47,7 +47,7 @@
 {{#content}}
   <div class="team {{{color}}}" title="{{{title}}}">
     {{#members}}
-    <img src="https://lb.gravatar.com/avatar/{{{hash}}}?s=80&amp;d=identicon" title="{{{email}}} - {{{typ}}}"class="contributor" />
+    <img src="https://lb.gravatar.com/avatar/{{{hash}}}?s=80&amp;d=identicon" title="{{{email}}} - {{{typ}}}" class="contributor" />
     {{^isAuthor}}<div class="spacer"></div>{{/isAuthor}}
     {{/members}}
   </div>

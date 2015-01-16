@@ -51,7 +51,7 @@ object Reporter extends App {
 
     val result:Seq[VisibleChange] = allChanges.map(toVisChange(analy.name()))
     result
-  }.toList.flatten
+  }.flatten.toList.sortWith(_.commitTime > _.commitTime)
 
   val t2 = System.currentTimeMillis()
   new ReportGenerator(changes).write(displayLimit)
