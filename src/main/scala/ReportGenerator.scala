@@ -14,9 +14,15 @@ class ReportGenerator(changes:Seq[VisibleChange]) {
 
     writeByName("truckMap", content)
 
+    val truckByProject = content.groupBy(_.repoName).toSeq
+      .map(in => VisibleRepo(in._1, in._2))
+      .sortBy(_.repoName).sortWith(_.percentageOk > _.percentageOk)
+
+    writeByName("truckByProject", truckByProject)
+
   }
 
-  private def writeByName(reportFileName:String, content:Seq[ChangeTypes.VisibleChange]) {
+  private def writeByName(reportFileName:String, content:Any) {
     val engine = new TemplateEngine
     val text = scala.io.Source.fromFile("src/main/resources/" + reportFileName + ".mu").mkString
     val template = engine.compileMoustache(text)
@@ -27,7 +33,7 @@ class ReportGenerator(changes:Seq[VisibleChange]) {
     }
 
     val contentMap:Map[String, Any] = Map( //
-      "truckMapContent" -> content,
+      "content" -> content,
       "reportDate" -> ReportGenerator.formatedDate(new Date())
     )
 
@@ -40,5 +46,4 @@ object ReportGenerator {
   def formatedDate(date:Date):String = {
     new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(date)
   }
-
 }
