@@ -43,13 +43,13 @@
 </head>
 <body style="text-align: center;">
 <h5 style="color: #eee8d5;">Gerrit Truck Trend Report ({{{reportDate}}})</h5>
-{{#content}}
+{{#truckMapContent}}
   <div class="team {{{color}}}" title="{{{title}}}">
     {{#members}}
     <img src="https://lb.gravatar.com/avatar/{{{hash}}}?s=80&amp;d=identicon" title="{{{email}}} - {{{typ}}}"class="contributor" />
     {{^isAuthor}}<div class="spacer"></div>{{/isAuthor}}
     {{/members}}
   </div>
-{{/content}}
+{{/truckMapContent}}
 </body>
 </html>

@@ -1,9 +1,7 @@
 import java.io._
 import RepoAnalyzer._
-import org.fusesource.scalate.TemplateEngine
-import java.text.SimpleDateFormat
 import java.util.Date
-
+import ChangeTypes._
 
 object Reporter extends App {
   /*
@@ -34,36 +32,8 @@ object Reporter extends App {
   def isGitDir(f:File):Boolean = f.isDirectory && f.getName == ".git"
   val repoDirs:Seq[File] = findRecursiv(repos, isGitDir)
 
-  private def formatedDate(date:Date):String = {
-    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(date)
-  }
-
-  case class VisibleChange(author:Contributor, contributors:Seq[Contributor],
-    commitTime:Int, repoName:String) {
-
-    val members = contributors :+ author
-
-    private def authorIsContributor(author:Contributor)(all:Seq[Contributor]):Boolean = {
-      val review = all.filter(_.typ.startsWith("Code-Review")).map(_.email)
-      return review.contains(author.email)
-    }
-
-    val color = members match {
-      case c if c.size == 1 => "warn"
-      case c if authorIsContributor(author)(c) => "warn"
-      case c if c.size >= 2 => "ok"
-      case _ => "warn"
-    }
-    def formatDate(date:Int) = formatedDate(new Date(date * 1000L))
-
-    val title = """|
-      |Time: %s
-      |Repo: %s
-      |""".stripMargin.trim.format(formatDate(commitTime), repoName)
-  }
-
   val changes:Seq[VisibleChange] = repoDirs.sorted.map{ repo =>
-    println(repo)
+    println("scanning: " + repo)
     val analy = new RepoAnalyzer(repo, commitLimit)
     val allChanges:Seq[Change] = analy.getChanges()
     def toVisChange(repoName:String)(change:Change):VisibleChange = {
@@ -81,23 +51,6 @@ object Reporter extends App {
     result
   }.flatten
 
+  new ReportGenerator(changes).write(displayLimit)
 
-  val text = scala.io.Source.fromFile("src/main/resources/truckMap.mu").mkString
-  val content = changes.sortWith(_.commitTime > _.commitTime)
-    .take(displayLimit)
-
-  val engine = new TemplateEngine
-  val template = engine.compileMoustache(text)
-
-  val outputDir = new File("out")
-  if (!outputDir.isDirectory) {
-    outputDir.mkdir()
-  }
-  writeToFile(engine.layout("",template, Map("content" -> content, "reportDate" -> formatedDate(new Date()))),
-    new File(outputDir, "truckMap.html"))
-
-  case class Contributor(email:String, typ:String) {
-    val hash = md5(email)
-    val isAuthor = typ == "author"
-  }
 }
