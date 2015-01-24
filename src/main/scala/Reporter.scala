@@ -30,14 +30,14 @@ object Reporter extends App {
       case found => found
     }
   }
-  println("... scanning for git dirs")
+  print("... scanning for git dirs")
   private def isGitDir(f:File):Boolean = f.isDirectory && f.getName == ".git"
   val repoDirs:Seq[File] = findRecursiv(repos, isGitDir)
-  print(" ... done")
+  println(" ... done")
   val t1 = System.currentTimeMillis()
 
   val changes:Seq[VisibleRepo] = repoDirs.par.map { repo =>
-      println("scanning: " + repo)
+      println("Scanning:   " + repo)
       val analy = new RepoAnalyzer(repo, commitLimit)
       val allChanges: Seq[Change] = analy.changes()
       def toVisChange(repoName: String)(change: Change): VisibleChange = {

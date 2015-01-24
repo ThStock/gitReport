@@ -51,6 +51,10 @@ object ChangeTypes {
 
     val branchCount = branchNames.size
 
+    val branchNamesText = branchNames.map(_.replaceFirst("refs/heads/", "")).mkString("\n")
+
+    val branchCountOk = branchCount < 2
+
     val okChangesCount:Int = changes.count(_.changeStatus == VisibleChangeStatus.ok)
 
     def percentageOk():Int = {

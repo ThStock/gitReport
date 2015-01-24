@@ -12,6 +12,9 @@
     -moz-column-count: 3; /* Firefox */
     column-count: 3;
   }
+  .branch-too-mutch {
+    color: #dc322f;
+  }
   .bar {
     width: 100%;
     height: 10px;
@@ -44,17 +47,22 @@
     margin-right: .5em;
     margin-left: .5em;
   }
+  .octicon {
+    font-size: 32px !important;
+  }
 
 </style>
   <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAAZiS0dEAH4AAAAAv6Hl0QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB94CAxcwI+jd2QUAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAAzklEQVQ4y8WTuxHCQAxE3x4eEpuMCqARaiAmpBGaoQZmqICcDqiAGNtL4N8Z83EAg5LT7Jx2Je0d/DsEMD3JoYBJDkkprqtSO3AGZEAKbEBHcArMamwBCgCWkUACj1GMIlSgMP1i8ZmsJbAc0Ve5R5KEfmNqc70p8rMOLDDVGV/SCJLf2Dg/BCeFCDlMCnFZ51rukwiD8/b23kbjeivdko17c720sSWJSJtdxc69tJHQKNIWqZFWJ5UMbRy+hT5aD6QPNjaEFlh6MNDf+413oHNZGVgDxJMAAAAASUVORK5CYII=" />
-
+  <link rel="stylesheet" href="./octoicons/octicons.css">
 </head>
 <body style="text-align: center;">
 <h5>Gerrit Truck by Repo Report ({{{reportDate}}})</h5>
 <div class="content">
 {{#content}}
   <div class="repo">
-  <p>{{{repoName}}} (banches:{{{branchCount}}}) - ({{{okChangesCount}}}/{{{allChangesCount}}})</p>
+  <p> <span class="octicon octicon-repo"></span> {{{repoName}}}
+  <span title="{{{branchNamesText}}}" {{^branchCountOk}}class="branch-too-mutch"{{/branchCountOk}}><span class="octicon octicon-git-branch"></span>{{{branchCount}}}</span>
+  <span class="octicon octicon-pulse"></span> {{{okChangesCount}}}/{{{allChangesCount}}}</p>
   <div class="bar"><div class="ok" style="width: {{{percentageOk}}}%;"></div></div>
   <div class="members">
   {{#members}}

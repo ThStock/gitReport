@@ -1,9 +1,10 @@
+import java.nio.file.{Path, Files}
+
 import com.gilt.handlebars.scala.binding.dynamic._
 import com.gilt.handlebars.scala.Handlebars
-import java.io.File
+import java.io.{InputStream, File}
 import java.util.Date
 import java.text.SimpleDateFormat
-import scala.collection.JavaConverters._
 import ChangeTypes._
 
 class ReportGenerator(repos:Seq[VisibleRepo]) {
@@ -24,19 +25,42 @@ class ReportGenerator(repos:Seq[VisibleRepo]) {
       .sortBy(_.repoName).sortWith(_.percentageOk > _.percentageOk)
 
     writeByName("truckByProject", truckByProject)
+    copyToOutput("octoicons/octicons.css")
+    copyToOutput("octoicons/octicons.eot")
+    copyToOutput("octoicons/octicons.svg")
+    copyToOutput("octoicons/octicons.woff")
+  }
 
+  private lazy val outDir:File = {
+    val out = new File("out")
+    if (!out.isDirectory) {
+      out.mkdir()
+    }
+    out
+  }
+
+  private def fileFrom(fileName:String): InputStream = {
+    getClass.getResourceAsStream(fileName)
+  }
+
+  private def copyToOutput(path:String) {
+    val outputFilename = outDir.toPath.resolve(path)
+    val parant = outputFilename.getParent
+    if (!Files.isDirectory(parant)) {
+      Files.createDirectories(parant)
+    }
+    if (!Files.exists(outputFilename)) {
+      Files.copy(fileFrom(path), outputFilename)
+    }
   }
 
   private def writeByName(reportFileName:String, content:Any) {
     val fileName = reportFileName + ".mu"
 
-    val text = io.Source.fromInputStream(getClass.getResourceAsStream(fileName)).mkString
+    val text = io.Source.fromInputStream(fileFrom(fileName)).mkString
     val template = Handlebars(text)
 
-    val outputDir = new File("out")
-    if (!outputDir.isDirectory) {
-      outputDir.mkdir()
-    }
+    val outputDir = outDir
 
     val contentMap:Map[String, Any] = Map( //
       "content" -> content,

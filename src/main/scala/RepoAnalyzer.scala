@@ -71,8 +71,8 @@ class RepoAnalyzer(repo:File, commitLimit:Int) {
 
       changes
     } catch {
-      case (_:MissingObjectException|_:NoHeadException|_:RevWalkException) => {
-        println("E: skipping " + repo.getAbsolutePath)
+      case e @ (_:MissingObjectException|_:NoHeadException|_:RevWalkException) => {
+        System.err.println("E: skipping " + repo.getAbsolutePath + " " + e.getMessage)
         Seq()
       }
     }
