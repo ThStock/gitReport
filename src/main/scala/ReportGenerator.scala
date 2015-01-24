@@ -6,16 +6,21 @@ import java.text.SimpleDateFormat
 import scala.collection.JavaConverters._
 import ChangeTypes._
 
-class ReportGenerator(changes:Seq[VisibleChange]) {
+class ReportGenerator(repos:Seq[VisibleRepo]) {
 
-  def write(displayLimit:Int) {
-    val content = changes
+  def write(displayLimit:Int, repoActivityLimit:Int) {
+    val content:Seq[VisibleChange] = repos.flatMap(_.changes)
+      .sortBy(_.commitTime).reverse
       .take(displayLimit)
 
     writeByName("truckMap", content)
 
-    val truckByProject = content.groupBy(_.repoName).toSeq
-      .map(in => VisibleRepo(in._1, in._2))
+    val repoByName = repos.groupBy(_.repoName)
+    def branchNamesOf(key:String) = repoByName.get(key).get.head.branchNames
+
+    val truckByProject:Seq[VisibleRepo] = content.groupBy(_.repoName).toSeq
+      .map(in => VisibleRepo(in._1, in._2, branchNamesOf(in._1)))
+      .filter(_.changes.size > repoActivityLimit)
       .sortBy(_.repoName).sortWith(_.percentageOk > _.percentageOk)
 
     writeByName("truckByProject", truckByProject)

@@ -45,11 +45,13 @@ object ChangeTypes {
     val isAuthor = typ == "author"
   }
 
-  case class VisibleRepo(repoName:String, changes:Seq[VisibleChange]) {
+  case class VisibleRepo(repoName:String, changes:Seq[VisibleChange], branchNames:Seq[String]) {
 
     val allChangesCount:Int = changes.size
 
-    val okChangesCount:Int = changes.filter(_.changeStatus == VisibleChangeStatus.ok).size
+    val branchCount = branchNames.size
+
+    val okChangesCount:Int = changes.count(_.changeStatus == VisibleChangeStatus.ok)
 
     def percentageOk():Int = {
       val result:Double = okChangesCount.toDouble / allChangesCount.toDouble * 100

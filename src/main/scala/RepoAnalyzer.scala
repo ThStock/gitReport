@@ -1,67 +1,80 @@
+import org.eclipse.jgit.api.errors.NoHeadException
+import org.eclipse.jgit.errors.{RevWalkException, MissingObjectException}
+
 import scala.collection.JavaConversions._
 import java.io._
 import org.eclipse.jgit.storage.file._
 import org.eclipse.jgit.lib._
 import org.eclipse.jgit.api._
 import org.eclipse.jgit.revwalk._
-import org.eclipse.jgit.diff._
-import org.eclipse.jgit.util.io._
 import RepoAnalyzer._
 
 class RepoAnalyzer(repo:File, commitLimit:Int) {
 
-  val repository:Repository = new FileRepositoryBuilder().setGitDir(repo)
+  private val repository:Repository = new FileRepositoryBuilder().setGitDir(repo)
     .readEnvironment()
     .findGitDir()
     .build()
 
-  def name(dir:File = repo):String = dir.getName match {
-    case ".git" => name(dir.getParentFile)
+  private val git = new Git(repository)
+
+  private lazy val branchRefs: Seq[Ref] = {
+    git.branchList().call().filterNot(_.getName.contains("release"))
+  }
+
+  def branchNames():Seq[String] = {
+    branchRefs.map(_.getName)
+  }
+
+  def name():String = toName()
+
+  def toName(dir:File = repo):String = dir.getName match {
+    case ".git" => toName(dir.getParentFile)
     case dirName => dirName
   }
 
-  def getChanges():Seq[Change] = {
+  private def notesOf(commit:RevCommit):Seq[FooterElement] = {
+    val note = git.notesShow().setNotesRef("refs/notes/review")
+      .setObjectId(commit).call()
+    if (note == null) return Seq()
+    val noteBytes = repository.open(note.getData).getCachedBytes
+    val noteMessage = new String(noteBytes,"UTF-8")
 
-    val git = new Git(repository)
+    FooterElement.elementsIn(noteMessage)
+  }
 
-    def notesOf(commit:RevCommit):Seq[FooterElement] = {
-      val note = git.notesShow().setNotesRef("refs/notes/review")
-        .setObjectId(commit).call()
-      if (note == null) return Seq()
-      val noteBytes = repository.open(note.getData()).getCachedBytes()
-      val noteMessage = new String(noteBytes,"UTF-8")
+  private def toChange(commit:RevCommit):Option[Change] = {
+    val authIden = commit.getAuthorIdent
+    val footer:Seq[FooterElement] = commit
+      .getFooterLines.map(e => FooterElement(e.getKey, e.getValue)) ++
+      notesOf(commit)
+    Some(Change(
+      authIden.getEmailAddress,
+      commit.getFullMessage,
+      commit.getId.abbreviate(7).name,
+      commit.getCommitTime,
+      footer
+    ))
+  }
 
-      return FooterElement.elementsIn(noteMessage)
-    }
-
-    def toChange(commit:RevCommit):Option[Change] = {
-      val authIden = commit.getAuthorIdent()
-      val footer:Seq[FooterElement] = commit
-        .getFooterLines.map(e => FooterElement(e.getKey, e.getValue)) ++
-         notesOf(commit)
-      return Some(Change(
-          authIden.getEmailAddress,
-          commit.getFullMessage,
-          commit.getId.abbreviate(7).name,
-          commit.getCommitTime,
-          footer
-          ))
-    }
-
+  def changes():Seq[Change] = {
     try {
-      val branches = git.branchList()
-      // TODO ListMode
-      .call()
       val logCmd = git.log()
-      branches.foreach(ref => logCmd.add(ref.getObjectId))
+
+      branchRefs
+        .foreach(ref => logCmd.add(ref.getObjectId))
+
       val changes:List[Change] = logCmd
         .setMaxCount(commitLimit)
         .call()
         .toList.flatMap(toChange)
 
-      return changes
+      changes
     } catch {
-      case _:org.eclipse.jgit.api.errors.NoHeadException => return Seq()
+      case (_:MissingObjectException|_:NoHeadException|_:RevWalkException) => {
+        println("E: skipping " + repo.getAbsolutePath)
+        Seq()
+      }
     }
   }
 }
@@ -71,7 +84,7 @@ object RepoAnalyzer {
   def writeToFile( s: String, file:File) {
     val out = new PrintWriter(file, "UTF-8")
     try{ out.print( s ) }
-      finally{ out.close }
+      finally{ out.close() }
   }
 
   def md5(s: String) = java.security.MessageDigest.getInstance("MD5")
@@ -98,7 +111,7 @@ object RepoAnalyzer {
             case _ => None
           }
         )
-      return elements
+      elements
     }
   }
 
