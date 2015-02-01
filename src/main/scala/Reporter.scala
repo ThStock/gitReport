@@ -10,29 +10,32 @@ object Reporter extends App {
    * git fetch
    */
 
-  def argsOpt(arrayPosition:Int):Option[String] = arrayPosition match {
-      case x if args.length > x =>  Some(args(x))
-      case _                     => None
-    }
+  def argsOpt(arrayPosition: Int): Option[String] = arrayPosition match {
+    case x if args.length > x => Some(args(x))
+    case _ => None
+  }
 
   val repos = new File(argsOpt(0).getOrElse("../"))
   val commitLimit = argsOpt(1).getOrElse("1200").toInt
   val displayLimit = argsOpt(2).getOrElse("700").toInt
   val repoActivityLimit = argsOpt(3).getOrElse("30").toInt
 
-  def findRecursiv(file:File, filter:File => Boolean):Seq[File] = {
-    val files = file.listFiles
-    files.filter(filter) match {
-      case notFound if notFound.isEmpty => {
-        files.filter(_.isDirectory)
-          .flatMap(findRecursiv(_,filter))
-      }
-      case found => found
+
+  def findRecursiv(files: Seq[File], filter: File => Boolean, matching:Seq[File] = Nil): Seq[File] = {
+    val sub:Seq[File] = files.filter(filter)
+    val singleMatch = sub.size == 1 && filter(sub(0))
+    if (files == Nil || singleMatch) {
+      matching
+    } else {
+      findRecursiv(files.map(_.listFiles()).filterNot(_ == null).flatten, filter, sub ++ matching)
     }
   }
+
   print("... scanning for git dirs")
-  private def isGitDir(f:File):Boolean = f.isDirectory && f.getName == ".git"
-  val repoDirs:Seq[File] = findRecursiv(repos, isGitDir)
+
+  private def isGitDir(f: File): Boolean = f.isDirectory && f.getName == ".git"
+
+  val repoDirs: Seq[File] = findRecursiv(repos.listFiles(), isGitDir).map(_.getAbsoluteFile)
   println(" ... done")
   val t1 = System.currentTimeMillis()
 
