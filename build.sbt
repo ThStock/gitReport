@@ -8,4 +8,6 @@ libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % "3.6.1.20150103
 
 libraryDependencies += "com.gilt" %% "handlebars-scala" % "2.0.1"
 
+libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.1" % "test"
+
 assemblyJarName in assembly := "git-report.jar"

@@ -1,7 +1,7 @@
 import java.io._
-import RepoAnalyzer._
-import java.util.Date
+
 import ChangeTypes._
+import RepoAnalyzer._
 
 object Reporter extends App {
   /*
@@ -39,24 +39,24 @@ object Reporter extends App {
   println(" ... done")
   val t1 = System.currentTimeMillis()
 
-  val changes:Seq[VisibleRepo] = repoDirs.par.map { repo =>
-      println("Scanning:   " + repo)
-      val analy = new RepoAnalyzer(repo, commitLimit)
-      val allChanges: Seq[Change] = analy.changes()
-      def toVisChange(repoName: String)(change: Change): VisibleChange = {
-        val author = Contributor(change.authorEmail, "author")
-        // TODO handle SignedOfBy
-        val reviewers: Seq[FooterElement] = change.footer
-          .filter(_.key.startsWith("Code-Review"))
+  val changes: Seq[VisibleRepo] = repoDirs.par.map { repo =>
+    println("Scanning:   " + repo)
+    val analy = new RepoAnalyzer(repo, commitLimit)
+    val allChanges: Seq[Change] = analy.changes()
+    def toVisChange(repoName: String)(change: Change): VisibleChange = {
+      val author = Contributor(change.authorEmail, "author")
+      // TODO handle SignedOfBy
+      val reviewers: Seq[FooterElement] = change.footer
+        .filter(_.key.startsWith("Code-Review"))
 
-        val contribs: Seq[Contributor] = reviewers
-          .map(foot => Contributor(foot.email.getOrElse(foot.value), foot.key))
-        VisibleChange(author, contribs, change.commitTime, repoName)
-      }
+      val contribs: Seq[Contributor] = reviewers
+        .map(foot => Contributor(foot.email.getOrElse(foot.value), foot.key))
+      VisibleChange(author, contribs, change.commitTime, repoName)
+    }
 
-      val result: Seq[VisibleChange] = allChanges.map(toVisChange(analy.toName()))
-      new VisibleRepo(analy.name(), result, analy.branchNames())
-    }.seq
+    val result: Seq[VisibleChange] = allChanges.map(toVisChange(analy.toName()))
+    new VisibleRepo(analy.name(), result, analy.branchNames())
+  }.seq
 
 
   val t2 = System.currentTimeMillis()

@@ -45,7 +45,13 @@ object ChangeTypes {
     val isAuthor = typ == "author"
   }
 
-  case class VisibleRepo(repoName:String, changes:Seq[VisibleChange], branchNames:Seq[String]) {
+  case class VisibleRepo(repoName:String, changes:Seq[VisibleChange], branchNames:Seq[String], _activity:Int = 0) {
+
+    val activityIndex = _activity match {
+      case i if i > 1 => "high"
+      case i if i < 1 => "low"
+      case _ => "normal"
+    }
 
     val allChangesCount:Int = changes.size
 
