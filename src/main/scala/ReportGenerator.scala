@@ -76,7 +76,7 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
     val repoSlides: Seq[Seq[Int]] = repoActivities.sliding(repoSegementSize, repoSegementSize).toList
 
     val repoSlidesFixedSize: Seq[Seq[Int]] = repoSlides match {
-      case s4 if s4.size == 4 => Seq(s4(0), s4(1), s4.takeRight(s4.size - 2).flatten)
+      case s4 if s4.size >= 4 => Seq(s4(0), s4(1), s4.takeRight(s4.size - 2).flatten)
       case s3 if s3.size == 3 => Seq(s3(0), s3(1), s3(2))
       case any => throw new IllegalStateException("wrong sliding " + any.size)
     }

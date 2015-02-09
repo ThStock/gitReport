@@ -35,13 +35,27 @@
     display: inline-block;
     padding-bottom: .3em;
   }
-  .contributor {
+  .contributor img {
     border-radius:3px;
     border: 0px solid #073642;
     height: 30px;
     width: 30px;
     margin: 0;
     padding: 0;
+  }
+  .contributor img {
+    -webkit-transition: all .5s ease-in-out; /* Safari and Chrome */
+    -moz-transition: all .5s ease-in-out; /* Firefox */
+    -ms-transition: all .5s ease-in-out; /* IE 9 */
+    -o-transition: all .5s ease-in-out; /* Opera */
+    transition: all .5s ease-in-out;
+  }
+  .contributor img:hover {
+    -webkit-transform:scale(2.25); /* Safari and Chrome */
+    -moz-transform:scale(2.25); /* Firefox */
+    -ms-transform:scale(2.25); /* IE 9 */
+    -o-transform:scale(2.25); /* Opera */
+    transform:scale(2.25);
   }
   .members {
     margin-right: .5em;
@@ -75,7 +89,9 @@
   <div class="bar"><div class="ok" style="width: {{{percentageOk}}}%;"></div></div>
   <div class="members">
   {{#members}}
-    <img src="https://lb.gravatar.com/avatar/{{{hash}}}?s=80&amp;d=identicon" title="{{{email}}} - {{{typ}}}" class="contributor" />
+    <span class="contributor" >
+      <img src="https://lb.gravatar.com/avatar/{{{hash}}}?s=80&amp;d=identicon" title="{{{email}}} - {{{typ}}}" />
+    </span>
   {{/members}}
   </div>
   </div>
