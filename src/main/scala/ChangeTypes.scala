@@ -1,12 +1,13 @@
 import java.util.Date
 
 object ChangeTypes {
-	case class VisibleChange(author:Contributor, contributors:Seq[Contributor],
-    commitTime:Int, repoName:String) {
+
+  case class VisibleChange(author: Contributor, contributors: Seq[Contributor],
+                           commitTime: Int, repoName: String) {
 
     val members = contributors :+ author
 
-    private def authorIsContributor(author:Contributor)(all:Seq[Contributor]):Boolean = {
+    private def authorIsContributor(author: Contributor)(all: Seq[Contributor]): Boolean = {
       val review = all.filter(_.typ.startsWith("Code-Review")).map(_.email)
       return review.contains(author.email)
     }
@@ -17,12 +18,12 @@ object ChangeTypes {
       case _ => "warn"
     }
 
-    private def formatDate(date:Int) = ReportGenerator.formatedDate(new Date(date * 1000L))
+    private def formatDate(date: Int) = ReportGenerator.formatedDate(new Date(date * 1000L))
 
     val title = """|
-      |Time: %s
-      |Repo: %s
-      |""".stripMargin.trim.format(formatDate(commitTime), repoName)
+                  |Time: %s
+                  |Repo: %s
+                  | """.stripMargin.trim.format(formatDate(commitTime), repoName)
 
     def changeStatus = members match {
       case c if c.size == 1 => VisibleChangeStatus.warn
@@ -33,19 +34,20 @@ object ChangeTypes {
   }
 
 
-  case class VisibleChangeStatus(key:String)
+  case class VisibleChangeStatus(key: String)
 
   object VisibleChangeStatus {
     val warn = VisibleChangeStatus("warning")
     val ok = VisibleChangeStatus("ok")
   }
 
-  case class Contributor(email:String, typ:String) {
+  case class Contributor(email: String, typ: String) {
     val hash = RepoAnalyzer.md5(email)
     val isAuthor = typ == "author"
+    val activityValue = "normal"
   }
 
-  case class VisibleRepo(repoName:String, changes:Seq[VisibleChange], branchNames:Seq[String], _activity:Int = 0) {
+  case class VisibleRepo(repoName: String, changes: Seq[VisibleChange], branchNames: Seq[String], _activity: Int = 0) {
 
     val activityIndex = _activity match {
       case i if i > 1 => "high"
@@ -53,7 +55,7 @@ object ChangeTypes {
       case _ => "normal"
     }
 
-    val allChangesCount:Int = changes.size
+    val allChangesCount: Int = changes.size
 
     val branchCount = branchNames.size
 
@@ -61,16 +63,17 @@ object ChangeTypes {
 
     val branchCountOk = branchCount < 2
 
-    val okChangesCount:Int = changes.count(_.changeStatus == VisibleChangeStatus.ok)
+    val okChangesCount: Int = changes.count(_.changeStatus == VisibleChangeStatus.ok)
 
-    def percentageOk():Int = {
-      val result:Double = okChangesCount.toDouble / allChangesCount.toDouble * 100
+    def percentageOk(): Int = {
+      val result: Double = okChangesCount.toDouble / allChangesCount.toDouble * 100
       result.toInt
     }
 
-    val members:Seq[Contributor] = changes.flatMap(_.members)
+    val members: Seq[Contributor] = changes.flatMap(_.members)
       .map(_.copy(typ = "player"))
       .toSet.toSeq.sortWith(_.email < _.email)
 
   }
+
 }

@@ -36,7 +36,10 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
         .filter(_.changes.size > repoActivityLimit)
         .sortBy(_.repoName).sortWith(_.percentageOk > _.percentageOk)
 
-      writeByName("truckByProject", truckByProject, "truckByProject" + dayDelta)
+      case class Slot(repos: Seq[VisibleRepo], name: String)
+      case class Segmented(slots: Seq[Slot])
+      val segments = ReportGenerator.slidingsOf(3)(truckByProject)
+      writeByName("truckByProject", Segmented(Seq(Slot(segments(0), "left"), Slot(segments(2), "right"), Slot(segments(1), "center"))), "truckByProject" + dayDelta)
 
     }
 
@@ -71,17 +74,13 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
   def repoStatus(repoActivityLimit: Int, repoNameToChanges: Map[String, Seq[VisibleChange]]): RepoStatus = {
     val repoNameToChangeCount = repoNameToChanges.map(in => (in._1, in._2.size))
     val repoActivities = repoNameToChangeCount.map(_._2).filter(_ > repoActivityLimit).toSeq.sorted
-    val repoSlideCount = 3
-    val repoSegementSize: Int = repoActivities.size / repoSlideCount
-    val repoSlides: Seq[Seq[Int]] = repoActivities.sliding(repoSegementSize, repoSegementSize).toList
-
-    val repoSlidesFixedSize: Seq[Seq[Int]] = repoSlides match {
-      case s4 if s4.size >= 4 => Seq(s4(0), s4(1), s4.takeRight(s4.size - 2).flatten)
-      case s3 if s3.size == 3 => Seq(s3(0), s3(1), s3(2))
-      case any => throw new IllegalStateException("wrong sliding " + any.size)
+    val repoSlidings: Seq[Seq[Int]] = ReportGenerator.slidingsOf(3)(repoActivities)
+    def maxIfPresent(in: Seq[Int]): Int = if (in == Nil) {
+      0
+    } else {
+      in.max
     }
-
-    RepoStatus(repoNameToChangeCount, repoNameToSize = repoSlidesFixedSize.map(_.max))
+    RepoStatus(repoNameToChangeCount, repoNameToSize = repoSlidings.map(maxIfPresent))
   }
 
   private lazy val outDir: File = {
@@ -117,9 +116,9 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
       reportFileName
     } else {
       outputFileName
-    } + ".html"
+    }
 
-    val outputFile = new File(outDir, outFileNameWithSuffix)
+    val outputFile = new File(outDir, outFileNameWithSuffix + ".html")
     RepoAnalyzer.writeToFile(template(contentMap), outputFile)
     println("written: " + outputFile.getAbsolutePath)
   }
@@ -127,6 +126,28 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
 }
 
 object ReportGenerator {
+
+  def slidingsOf[A](maxLength: Int)(in: Seq[A]): Seq[Seq[A]] = {
+    val sortedIn = in
+    val slots: Int = in.size / maxLength
+    if (sortedIn.length < maxLength) {
+      val toFill = (maxLength - sortedIn.length) / 2
+      val rightFill = toFill + toFill + sortedIn.length match {
+        case a if a < maxLength => toFill + 1
+        case _ => toFill
+      }
+
+      Seq.fill(maxLength)(Nil).take(toFill) ++ sortedIn.map(Seq(_)) ++ Seq.fill(maxLength)(Nil).take(rightFill)
+    } else {
+      val slidings = sortedIn.sliding(slots, slots).toList
+      if (slidings.length > maxLength) {
+        slidings.updated(maxLength - 1, slidings(maxLength - 1) ++ slidings(maxLength)).take(maxLength)
+      } else {
+        slidings
+      }
+    }
+
+  }
 
   private def fileFrom(fileName: String): InputStream = {
     getClass.getResourceAsStream(fileName)

@@ -34,6 +34,7 @@ class RepoAnalyzer(repo: File, commitLimit: Int) {
 
   def toName(dir: File = repo): String = dir.getName match {
     case ".git" => toName(dir.getParentFile)
+    case "." => toName(dir.getParentFile)
     case dirName => dirName
   }
 
@@ -135,7 +136,7 @@ object RepoAnalyzer {
     val sub: Seq[File] = files.filter(filter)
     val singleMatch = sub.size == 1 && filter(sub(0))
     if (files == Nil || singleMatch) {
-      matching
+      matching ++ sub
     } else {
       findRecursiv(files.map(_.listFiles()).filterNot(_ == null).flatten, filter, sub ++ matching)
     }

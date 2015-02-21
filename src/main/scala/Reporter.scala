@@ -1,7 +1,6 @@
 import java.io._
 
 import ChangeTypes._
-import RepoAnalyzer._
 
 object Reporter extends App {
   /*
@@ -20,17 +19,22 @@ object Reporter extends App {
   val displayLimit = argsOpt(2).getOrElse("700").toInt
   val repoActivityLimit = argsOpt(3).getOrElse("30").toInt
 
-  print("... scanning for git dirs")
+  print("... scanning for git dirs in " + repos.getAbsolutePath)
 
   private def isGitDir(f: File): Boolean = f.isDirectory && f.getName == ".git"
-
-  val repoDirs: Seq[File] = RepoAnalyzer.findRecursiv(repos.listFiles(), isGitDir).map(_.getAbsoluteFile)
+  val inialFolderEntries = repos.listFiles()
+  val repoDirs: Seq[File] = RepoAnalyzer.findRecursiv(inialFolderEntries, isGitDir).map(_.getAbsoluteFile)
   println(" ... done")
-  val t1 = System.currentTimeMillis()
+  if (repoDirs == Nil) {
+    println("E: no repos found")
+  } else {
+    val t1 = System.currentTimeMillis()
 
-  val changes: Seq[VisibleRepo] = RepoAnalyzer.aggregate(repoDirs, commitLimit)
+    val changes: Seq[VisibleRepo] = RepoAnalyzer.aggregate(repoDirs, commitLimit)
 
-  val t2 = System.currentTimeMillis()
-  new ReportGenerator(changes).write(displayLimit, repoActivityLimit)
-  println("reports generated in " + (t2 - t1) + " (ms)")
+    val t2 = System.currentTimeMillis()
+    new ReportGenerator(changes).write(displayLimit, repoActivityLimit)
+    println("reports generated in " + (t2 - t1) + " (ms)")
+
+  }
 }
