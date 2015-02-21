@@ -51,8 +51,20 @@
     -o-transform:scale(2.25); /* Opera */
     transform:scale(2.25);
   }
-  .contributor.normal img {
+  .contributor.lowest img {
     opacity: 0.1;
+  }
+  .contributor.low img {
+    opacity: 0.4;
+  }
+  .contributor.mid img {
+    opacity: 0.6;
+  }
+  .contributor.high img {
+    opacity: 0.8;
+  }
+  .contributor.highest img {
+    opacity: 1.0;
   }
   .members {
     margin-right: .5em;

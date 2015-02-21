@@ -1,5 +1,7 @@
 import java.util.Date
 
+import ChangeTypes.Contributor.Activity
+
 object ChangeTypes {
 
   case class VisibleChange(author: Contributor, contributors: Seq[Contributor],
@@ -9,7 +11,7 @@ object ChangeTypes {
 
     private def authorIsContributor(author: Contributor)(all: Seq[Contributor]): Boolean = {
       val review = all.filter(_.typ.startsWith("Code-Review")).map(_.email)
-      return review.contains(author.email)
+      review.contains(author.email)
     }
 
     def color = changeStatus match {
@@ -41,10 +43,25 @@ object ChangeTypes {
     val ok = VisibleChangeStatus("ok")
   }
 
-  case class Contributor(email: String, typ: String) {
+  case class Contributor(email: String, typ: String, activity: Contributor.Activity = Activity.LOWEST) {
     val hash = RepoAnalyzer.md5(email)
     val isAuthor = typ == "author"
-    val activityValue = "normal"
+    val activityValue = activity.key
+
+  }
+
+  object Contributor {
+
+    case class Activity(key: String)
+
+    object Activity {
+      val LOWEST = Activity("lowest")
+      val LOW = Activity("low")
+      val MID = Activity("mid")
+      val HIGH = Activity("high")
+      val HIGHEST = Activity("highest")
+    }
+
   }
 
   case class VisibleRepo(repoName: String, changes: Seq[VisibleChange], branchNames: Seq[String], _activity: Int = 0) {
@@ -70,9 +87,68 @@ object ChangeTypes {
       result.toInt
     }
 
-    val members: Seq[Contributor] = changes.flatMap(_.members)
-      .map(_.copy(typ = "player"))
-      .toSet.toSeq.sortWith(_.email < _.email)
+    val members: Seq[Contributor] = VisibleRepo.toContibutors(changes)
+
+  }
+
+  object VisibleRepo {
+    def toContibutors(changes: Seq[VisibleChange]): Seq[ChangeTypes.Contributor] = {
+      object EmailAndTyp {
+        def by(contributor: Contributor) = EmailAndTyp(contributor.email, "")
+      }
+      case class EmailAndTyp(email: String, typ: String)
+
+      val allMembers = changes.flatMap(_.members)
+      val allMembersEmails = allMembers.map(_.email).toSet
+      val allChangesByAuthor = changes.groupBy(_.author.copy(typ = "player"))
+      val allChangesByContributor = changes.groupBy(_.contributors).flatMap(in => {
+        in._1.map(key => (EmailAndTyp.by(key), in._2))
+      })
+
+      def selectActivity(contributor: Contributor) = {
+        if (!allChangesByAuthor.contains(contributor)) {
+          // TODO
+          // is reviewer only
+          Activity.HIGH
+        } else {
+
+          val self = EmailAndTyp(contributor.email, "")
+          val changesOf = allChangesByAuthor(contributor)
+          val membersSimpyfied = changesOf.flatMap(_.members).map(EmailAndTyp.by)
+          val changesOfContibutors = changesOf.map(_.contributors).map(in => in.map(EmailAndTyp.by))
+          val selfReviews = changesOfContibutors.filter(_.contains(self))
+          val contributorsSimpyfied = changesOf.flatMap(_.contributors).map(EmailAndTyp.by)
+          val contributions = allChangesByContributor.get(EmailAndTyp.by(contributor))
+
+          val selfReviewsVsChanges = selfReviews.size.toDouble / (changesOfContibutors.size + contributions.getOrElse(Nil).size - selfReviews.size)
+          val isNoDirectCommit = contributorsSimpyfied.size >= changesOf.size
+          val repoHasMoreThenOneMember = membersSimpyfied.toSet.size > 1
+          val repoHasMoreThenOneContributors = contributorsSimpyfied.toSet.size > 1
+
+          if (allMembersEmails.size > 1 && membersSimpyfied.toSet.size == allMembersEmails.size &&
+            selfReviewsVsChanges < 0.1d && isNoDirectCommit) {
+            Activity.HIGHEST
+          } else if (allMembersEmails.size > 1 && selfReviewsVsChanges < 0.2d && isNoDirectCommit) {
+            Activity.HIGH
+          } else if (allMembersEmails.size == 1) {
+            Activity.MID
+          } else if (repoHasMoreThenOneMember && selfReviewsVsChanges < 0.4d && isNoDirectCommit) {
+            Activity.MID
+          } else if (repoHasMoreThenOneContributors && selfReviewsVsChanges < 0.8d) {
+            Activity.LOW
+          } else {
+            Activity.LOWEST
+          }
+        }
+      }
+
+      allMembers
+        .map(in => in.copy(typ = "player"))
+        .toSet[Contributor]
+        .map(in => in.copy(activity = selectActivity(in)))
+        .toSeq
+        .sortWith(_.email < _.email)
+    }
 
   }
 
