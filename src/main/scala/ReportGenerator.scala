@@ -139,9 +139,12 @@ object ReportGenerator {
 
       Seq.fill(maxLength)(Nil).take(toFill) ++ sortedIn.map(Seq(_)) ++ Seq.fill(maxLength)(Nil).take(rightFill)
     } else {
-      val slidings = sortedIn.sliding(slots, slots).toList
+      val slidings: Seq[Seq[A]] = sortedIn.sliding(slots, slots).toList
       if (slidings.length > maxLength) {
-        slidings.updated(maxLength - 1, slidings(maxLength - 1) ++ slidings(maxLength)).take(maxLength)
+        val right: Seq[Seq[A]] = slidings.takeRight(slidings.length - maxLength)
+        val last = slidings(maxLength - 1) ++ right.flatten
+        val result: Seq[Seq[A]] = slidings.updated(maxLength - 1, last)
+        result.take(maxLength)
       } else {
         slidings
       }

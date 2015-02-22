@@ -33,6 +33,36 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen {
 
       assertResult(Seq(Seq(4, 2), Seq(3, 1), Seq(5, 8)))(result)
     }
+    scenario("5 elments in 3") {
+      Given("4,2,3,1,5")
+      val ints: Seq[Int] = Seq(4, 2, 3, 1, 5)
+
+      When("sliding")
+      val result: Seq[Seq[Int]] = ReportGenerator.slidingsOf(3)(ints)
+      Then("check")
+
+      assertResult(Seq(Seq(4), Seq(2), Seq(3, 1, 5)))(result)
+    }
+    scenario("7 elments in 3") {
+      Given("4,2,3,1,5,8,9")
+      val ints: Seq[Int] = Seq(4, 2, 3, 1, 5, 8, 9)
+
+      When("sliding")
+      val result: Seq[Seq[Int]] = ReportGenerator.slidingsOf(3)(ints)
+      Then("check")
+
+      assertResult(Seq(Seq(4, 2), Seq(3, 1), Seq(5, 8, 9)))(result)
+    }
+    scenario("8 elments in 3") {
+      Given("4,2,3,1,5,8,9,0")
+      val ints: Seq[Int] = Seq(4, 2, 3, 1, 5, 8, 9, 0)
+
+      When("sliding")
+      val result: Seq[Seq[Int]] = ReportGenerator.slidingsOf(3)(ints)
+      Then("check")
+
+      assertResult(Seq(Seq(4, 2), Seq(3, 1), Seq(5, 8, 9, 0)))(result)
+    }
     scenario("1 elments in 3") {
       Given("1")
       val ints: Seq[Int] = Seq(1)
