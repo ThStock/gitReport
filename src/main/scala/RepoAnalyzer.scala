@@ -9,11 +9,12 @@ import org.eclipse.jgit.api.errors.NoHeadException
 import org.eclipse.jgit.errors.{MissingObjectException, RevWalkException}
 import org.eclipse.jgit.lib._
 import org.eclipse.jgit.revwalk._
+import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter
 import org.eclipse.jgit.storage.file._
 
 import scala.collection.JavaConversions._
 
-class RepoAnalyzer(repo: File, commitLimit: Int) {
+class RepoAnalyzer(repo: File, commitLimitDays: Long) {
 
   private val repository: Repository = new FileRepositoryBuilder().setGitDir(repo)
     .readEnvironment()
@@ -70,14 +71,32 @@ class RepoAnalyzer(repo: File, commitLimit: Int) {
       branchRefs
         .foreach(ref => logCmd.add(ref.getObjectId))
 
-      val changes: List[Change] = logCmd
-        .setMaxCount(commitLimit)
-        .call()
-        .toList.flatMap(toChange)
+      val walk = new RevWalk(git.getRepository)
+      val headId = git.getRepository.resolve(Constants.HEAD)
+      if (headId == null) {
+        System.err.println("E: skipping " + repo.getAbsolutePath + " no HEAD")
+        Nil
+      } else {
+        val now = System.currentTimeMillis()
+        walk.setRevFilter(CommitTimeRevFilter.between(now - 86400000L * commitLimitDays, now))
+        val root = walk.parseCommit(headId)
+        walk.markStart(root)
 
-      changes
+        def changesOfWalk(): Seq[RevCommit] = {
+          val change = walk.next()
+          if (change != null) {
+            Seq(change) ++ changesOfWalk()
+          } else {
+            walk.release()
+            Nil
+          }
+        }
+
+        val changes: List[Change] = changesOfWalk().toList.flatMap(toChange)
+        changes
+      }
     } catch {
-      case e@(_: MissingObjectException | _: NoHeadException | _: RevWalkException) => {
+      case e@(_: MissingObjectException | _: NoHeadException | _: RevWalkException | _: NullPointerException) => {
         System.err.println("E: skipping " + repo.getAbsolutePath + " " + e.getMessage)
         Nil
       }
@@ -87,10 +106,10 @@ class RepoAnalyzer(repo: File, commitLimit: Int) {
 
 object RepoAnalyzer {
 
-  def aggregate(repoDirs: Seq[File], commitLimit: Int): Seq[VisibleRepo] = {
+  def aggregate(repoDirs: Seq[File], commitLimitDays: Int): Seq[VisibleRepo] = {
     repoDirs.par.map { repo =>
       println("Scanning:   " + repo)
-      val analy = new RepoAnalyzer(repo, commitLimit)
+      val analy = new RepoAnalyzer(repo, commitLimitDays)
       val allChanges: Seq[Change] = analy.changes()
       val authorsToEmails: Map[String, String] = allChanges //
         .map(c => (c.authorName, c.authorEmail))
@@ -108,7 +127,7 @@ object RepoAnalyzer {
 
     def lookup(username: String): String = authorsToEmails.getOrElse(username, username)
 
-    val signers: Seq[Contributor] = filterAndMap(change.footer,"Signed-off-by", lookup)
+    val signers: Seq[Contributor] = filterAndMap(change.footer, "Signed-off-by", lookup)
     val reviewers: Seq[Contributor] = filterAndMap(change.footer, "Code-Review", lookup)
 
     if (signers != Nil) {
@@ -126,7 +145,7 @@ object RepoAnalyzer {
 
   }
 
-  private def filterAndMap(footers:Seq[FooterElement], key:String, lookup:String => String):Seq[Contributor] = {
+  private def filterAndMap(footers: Seq[FooterElement], key: String, lookup: String => String): Seq[Contributor] = {
     footers
       .filter(_.key.startsWith(key))
       .map(foot => Contributor(foot.email.getOrElse(lookup(foot.value.trim)), foot.key))
