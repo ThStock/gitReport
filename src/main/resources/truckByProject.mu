@@ -36,20 +36,19 @@
     width: 30px;
     margin: 0;
     padding: 0;
-  }
-  .contributor img {
-    -webkit-transition: all .3s ease-in-out; /* Safari and Chrome */
-    -moz-transition: all .3s ease-in-out; /* Firefox */
-    -ms-transition: all .3s ease-in-out; /* IE 9 */
-    -o-transition: all .3s ease-in-out; /* Opera */
-    transition: all .3s ease-in-out;
+    -webkit-transition: all .2s ease-in-out; /* Safari and Chrome */
+    -moz-transition: all .2s ease-in-out; /* Firefox */
+    -ms-transition: all .2s ease-in-out; /* IE 9 */
+    -o-transition: all .2s ease-in-out; /* Opera */
+    transition: all .2s ease-in-out;
   }
   .contributor img:hover {
-    -webkit-transform:scale(2.25); /* Safari and Chrome */
-    -moz-transform:scale(2.25); /* Firefox */
-    -ms-transform:scale(2.25); /* IE 9 */
-    -o-transform:scale(2.25); /* Opera */
-    transform:scale(2.25);
+    -webkit-transform:scale(3.25); /* Safari and Chrome */
+    -moz-transform:scale(3.25); /* Firefox */
+    -ms-transform:scale(3.25); /* IE 9 */
+    -o-transform:scale(3.25); /* Opera */
+    transform:scale(3.25);
+    opacity: 1.0 !important;
   }
   .contributor.lowest img {
     opacity: 0.1;
@@ -83,7 +82,6 @@
     color: #2aa198;
   }
 
-  #container { }
   #left { float:left; width:33%; }
   #right { float:right; width:33%; }
   #center { margin-left:33%; margin-right:33%; }
@@ -109,7 +107,7 @@
         <div class="members">
         {{#members}}
           <span class="contributor {{{activityValue}}}" >
-            <img src="https://lb.gravatar.com/avatar/{{{hash}}}?s=80&amp;d=identicon" title="{{{email}}} - {{{typ}}}" />
+            <img src="https://lb.gravatar.com/avatar/{{{hash}}}?s=160&amp;d=identicon" title="{{{email}}} - {{{typ}}}" />
           </span>
         {{/members}}
         </div>
