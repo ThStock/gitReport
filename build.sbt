@@ -2,7 +2,7 @@ name := "GitReport"
 
 version := "1.0"
 
-scalaVersion := "2.11.5"
+scalaVersion := "2.11.6"
 
 libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % "3.6.1.201501031845-r"
 
