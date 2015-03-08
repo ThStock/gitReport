@@ -118,7 +118,7 @@ object RepoAnalyzer {
         .foldLeft(Map[String, String]())(_ + _)
 
       val result: Seq[VisibleChange] = allChanges.map(toVisChange(analy.toName(), authorsToEmails))
-      new VisibleRepo(analy.name(), result, analy.branchNames())
+      new VisibleRepo(analy.name(), result, analy.branchNames(), commitLimitDays)
     }.seq
 
   }

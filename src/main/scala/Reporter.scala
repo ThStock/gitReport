@@ -33,7 +33,7 @@ object Reporter extends App {
     val changes: Seq[VisibleRepo] = RepoAnalyzer.aggregate(repoDirs, commitLimitDays)
 
     val t2 = System.currentTimeMillis()
-    new ReportGenerator(changes).write(displayLimit, repoActivityLimitInDays)
+    new ReportGenerator(changes).write(commitLimitDays, displayLimit, repoActivityLimitInDays)
     println("reports generated in " + (t2 - t1) + " (ms)")
 
   }

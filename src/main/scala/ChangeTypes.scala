@@ -35,7 +35,6 @@ object ChangeTypes {
     }
   }
 
-
   case class VisibleChangeStatus(key: String)
 
   object VisibleChangeStatus {
@@ -64,7 +63,8 @@ object ChangeTypes {
 
   }
 
-  case class VisibleRepo(repoName: String, changes: Seq[VisibleChange], branchNames: Seq[String], _activity: Int = 0) {
+  case class VisibleRepo(repoName: String, changes: Seq[VisibleChange]
+                         , branchNames: Seq[String], _repoActivityLimitInDays: Int, _activity: Int = 0) {
 
     val activityIndex = _activity match {
       case i if i > 1 => "high"
@@ -88,6 +88,21 @@ object ChangeTypes {
     }
 
     val members: Seq[Contributor] = VisibleRepo.toContibutors(changes)
+
+    private def median(in: Seq[Int]): Double = {
+      if (in == Nil) {
+        0
+      } else {
+        val (lower, upper) = in.sorted.splitAt(in.size / 2)
+        if (in.size % 2 == 0) (lower.last + upper.head) / 2.0 else upper.head
+      }
+    }
+
+    val changesPerDay: Double = {
+      val changeCounts = changes.groupBy(_.author).toSeq.map(_._2.size)
+      BigDecimal(median(changeCounts) / _repoActivityLimitInDays)
+        .setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
+    }
 
   }
 
