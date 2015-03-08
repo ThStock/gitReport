@@ -9,37 +9,44 @@ import com.gilt.handlebars.scala.binding.dynamic._
 
 class ReportGenerator(repos: Seq[VisibleRepo]) {
 
-  def write(displayLimit: Int, repoActivityLimit: Int) {
+  def write(displayLimit: Int, repoActivityLimitInDays: Int) {
     val content: Seq[VisibleChange] = repos.flatMap(_.changes)
       .sortBy(_.commitTime).reverse
 
     writeByName("truckMap", content.take(displayLimit))
 
-    writeTruckByRepo(repoActivityLimit, content, displayLimit)
+    writeTruckByRepo(repoActivityLimitInDays, content, displayLimit)
   }
 
-  def writeTruckByRepo(repoActivityLimit: Int, content: Seq[VisibleChange], displayLimit: Int) {
+  def writeTruckByRepo(repoActivityLimitInDays: Int, content: Seq[VisibleChange], displayLimit: Int) {
     val repoByName = repos.groupBy(_.repoName)
     def branchNamesOf(key: String) = repoByName.get(key).get.head.branchNames
 
-    val latestCommitDate = content.map(_.commitTime).max
+    val latestCommitDate = content.map(_.commitTime).max.toLong
 
     def write(dayDelta: Int) {
 
-      val contentGrouped = content
-        .filter(_.commitTime < latestCommitDate - dayDelta * 86400)
+      val filterCommitDate = latestCommitDate - dayDelta * 86400L
+      val contentListed = content
+        .filter(_.commitTime < filterCommitDate)
         .take(displayLimit)
+      val contentGrouped = contentListed
         .groupBy(_.repoName)
 
       val truckByProject: Seq[VisibleRepo] = contentGrouped.toSeq
-        .map(in => VisibleRepo(in._1, in._2, branchNamesOf(in._1), scoreOf(in._1, repoActivityLimit, contentGrouped)))
-        .filter(_.changes.size > repoActivityLimit)
+        .map(in => VisibleRepo(in._1, in._2, branchNamesOf(in._1), scoreOf(in._1, repoActivityLimitInDays, contentGrouped)))
+        .filter(_.changes.size > repoActivityLimitInDays)
         .sortBy(_.repoName).sortWith(_.percentageOk > _.percentageOk)
 
       case class Slot(repos: Seq[VisibleRepo], name: String)
-      case class Segmented(slots: Seq[Slot])
+
+      case class Segmented(slots: Seq[Slot], newestCommitDate: String, latestCommitDate: String)
       val segments = ReportGenerator.slidingsOf(3)(truckByProject)
-      writeByName("truckByProject", Segmented(Seq(Slot(segments(0), "left"), Slot(segments(2), "right"), Slot(segments(1), "center"))), "truckByProject" + dayDelta)
+      val segemnts = Segmented(slots = Seq(Slot(segments(0), "left"), Slot(segments(2), "right"), Slot(segments(1), "center")),
+        latestCommitDate = ReportGenerator.formatedDateBy(contentListed.map(_.commitTime).min * 1000L),
+        newestCommitDate = ReportGenerator.formatedDateBy(filterCommitDate * 1000L)
+      )
+      writeByName("truckByProject", segemnts, "truckByProject" + dayDelta)
 
     }
 
@@ -154,6 +161,10 @@ object ReportGenerator {
 
   private def fileFrom(fileName: String): InputStream = {
     getClass.getResourceAsStream(fileName)
+  }
+
+  def formatedDateBy(date: Long): String = {
+    formatedDate(new Date(date))
   }
 
   def formatedDate(date: Date): String = {

@@ -93,7 +93,7 @@
   <link rel="stylesheet" href="./octoicons/octicons.css">
 </head>
 <body style="text-align: center;">
-<h5>Gerrit Truck by Repo Report ({{{reportDate}}})</h5>
+<h5>Gerrit Truck by Repo Report ({{{reportDate}}} | {{{content.newestCommitDate}}} - {{{content.latestCommitDate}}})</h5>
 <div id="container">
   {{#content.slots}}
     <div id="{{{name}}}">

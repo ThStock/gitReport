@@ -17,7 +17,7 @@ object Reporter extends App {
   val repos = new File(argsOpt(0).getOrElse("../"))
   val commitLimitDays = argsOpt(1).getOrElse("30").toInt
   val displayLimit = argsOpt(2).getOrElse("4000").toInt
-  val repoActivityLimit = argsOpt(3).getOrElse("10").toInt
+  val repoActivityLimitInDays = argsOpt(3).getOrElse("10").toInt
 
   print("... scanning for git dirs in " + repos.getAbsolutePath)
 
@@ -33,7 +33,7 @@ object Reporter extends App {
     val changes: Seq[VisibleRepo] = RepoAnalyzer.aggregate(repoDirs, commitLimitDays)
 
     val t2 = System.currentTimeMillis()
-    new ReportGenerator(changes).write(displayLimit, repoActivityLimit)
+    new ReportGenerator(changes).write(displayLimit, repoActivityLimitInDays)
     println("reports generated in " + (t2 - t1) + " (ms)")
 
   }
