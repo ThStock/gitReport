@@ -9,7 +9,7 @@ import org.eclipse.jgit.api.errors.NoHeadException
 import org.eclipse.jgit.errors.{MissingObjectException, RevWalkException}
 import org.eclipse.jgit.lib._
 import org.eclipse.jgit.revwalk._
-import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter
+import org.eclipse.jgit.revwalk.filter.{AndRevFilter, RevFilter, CommitTimeRevFilter}
 import org.eclipse.jgit.storage.file._
 
 import scala.collection.JavaConversions._
@@ -78,7 +78,9 @@ class RepoAnalyzer(repo: File, commitLimitDays: Long) {
         Nil
       } else {
         val now = System.currentTimeMillis()
-        walk.setRevFilter(CommitTimeRevFilter.between(now - 86400000L * commitLimitDays, now))
+
+        val timeFilter = CommitTimeRevFilter.between(now - 86400000L * commitLimitDays, now)
+        walk.setRevFilter(AndRevFilter.create(RevFilter.NO_MERGES, timeFilter))
         val root = walk.parseCommit(headId)
         walk.markStart(root)
 
