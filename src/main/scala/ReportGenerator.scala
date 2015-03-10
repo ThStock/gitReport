@@ -134,9 +134,9 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
 
 object ReportGenerator {
 
-  def slidingsOf[A](maxLength: Int)(in: Seq[A]): Seq[Seq[A]] = {
-    val sortedIn = in
-    val slots: Int = in.size / maxLength
+  def slidingsOf[A](maxLength: Int)(sortedIn: Seq[A]): Seq[Seq[A]] = {
+    val slots: Int = sortedIn.size / maxLength
+
     if (sortedIn.length < maxLength) {
       val toFill = (maxLength - sortedIn.length) / 2
       val rightFill = toFill + toFill + sortedIn.length match {
@@ -148,10 +148,17 @@ object ReportGenerator {
     } else {
       val slidings: Seq[Seq[A]] = sortedIn.sliding(slots, slots).toList
       if (slidings.length > maxLength) {
-        val right: Seq[Seq[A]] = slidings.takeRight(slidings.length - maxLength)
-        val last = slidings(maxLength - 1) ++ right.flatten
-        val result: Seq[Seq[A]] = slidings.updated(maxLength - 1, last)
-        result.take(maxLength)
+        val newSliding: Seq[Seq[A]] = sortedIn.sliding(slots + 1, slots + 1).toList
+        val slidingSizes = newSliding.map(_.size)
+        val slidingDiff = slidingSizes.max - slidingSizes.min
+        if (newSliding.length != maxLength || slidingDiff > 1) {
+          val right: Seq[Seq[A]] = slidings.takeRight(slidings.length - maxLength)
+          val last = slidings(maxLength - 1) ++ right.flatten
+          val result: Seq[Seq[A]] = slidings.updated(maxLength - 1, last)
+          result.take(maxLength)
+        } else {
+          newSliding
+        }
       } else {
         slidings
       }
