@@ -1,5 +1,5 @@
+import ChangeTypes.{Contributor, VisibleChangeStatus}
 import RepoAnalyzer.{Change, FooterElement}
-import ChangeTypes.{VisibleChangeStatus, VisibleChange, Contributor}
 import org.scalatest._
 
 class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
@@ -87,7 +87,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
     }
   }
 
-  feature("to visible chage") {
+  feature("to visible change") {
     scenario("convert commit with only an author") {
       Given("change with author")
       val repoName = "a"
@@ -110,12 +110,17 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult(VisibleChangeStatus.warn)(result.changeStatus)
       assertResult("warn")(result.color)
     }
-    scenario("convert commit with reviewer") {
-      Given("change with author and reviewer")
+
+    scenario("convert commit with reviewers") {
+      Given("change with author and reviewers")
       val repoName = "a"
+      val authorEmail: String = "Bert@example.org"
+      val reviewerEmail = "Reviewer@Example.org"
       val authorsToEmails = Map[String, String]()
-      val authorEmail: String = "bert@example.org"
-      val others:Seq[FooterElement] = Seq(FooterElement("Code-Review", "Some"))
+      val others: Seq[FooterElement] = Seq(
+        FooterElement("Code-Review", "Some"),
+        FooterElement("Code-Review", "Random J Developer <" + reviewerEmail + ">")
+      )
       val change = Change(authorEmail, "Bert", "Do Something", "41", 11, others)
 
       When("convert")
@@ -123,13 +128,15 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
 
       Then("compare")
       assertResult(repoName)(result.repoName)
-      assertResult(authorEmail)(result.author.email)
+      assertResult(authorEmail.toLowerCase)(result.author.email)
       assertResult(true)(result.author.isAuthor)
       assertResult("author")(result.author.typ)
       assertResult(11)(result.commitTime)
       assertResult("Time: 1970-01-01T01:00:11\nRepo: a")(result.title)
-      assertResult(Seq(Contributor("Some", "Code-Review")))(result.contributors)
-      assertResult(Seq(Contributor("Some", "Code-Review"), Contributor(authorEmail, "author")))(result.members)
+      assertResult(Seq(Contributor("Some", "Code-Review"),
+        Contributor(reviewerEmail.toLowerCase, "Code-Review")))(result.contributors)
+      assertResult(Seq(Contributor("Some", "Code-Review"), Contributor(reviewerEmail.toLowerCase, "Code-Review"),
+        Contributor(authorEmail.toLowerCase, "author")))(result.members)
       assertResult(VisibleChangeStatus.ok)(result.changeStatus)
       assertResult("ok")(result.color)
     }
@@ -137,9 +144,9 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       Given("change with author and signer")
       val repoName = "a"
       val authorsToEmails = Map[String, String]()
-      val authorEmail: String = "bert@example.org"
-      val signerEmail: String = "random@developer.example.org"
-      val others:Seq[FooterElement] = Seq(FooterElement("Signed-off-by", "Random J Developer <" + signerEmail + ">"))
+      val authorEmail: String = "Bert@example.org"
+      val signerEmail: String = "Random@developer.example.org"
+      val others: Seq[FooterElement] = Seq(FooterElement("Signed-off-by", "Random J Developer <" + signerEmail + ">"))
       val change = Change(authorEmail, "Bert", "Do Something", "41", 81, others)
 
       When("convert")
@@ -147,13 +154,13 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
 
       Then("compare")
       assertResult(repoName)(result.repoName)
-      assertResult(signerEmail)(result.author.email)
+      assertResult(signerEmail.toLowerCase)(result.author.email)
       assertResult(true)(result.author.isAuthor)
       assertResult("author")(result.author.typ)
       assertResult(81)(result.commitTime)
       assertResult("Time: 1970-01-01T01:01:21\nRepo: a")(result.title)
-      assertResult(Seq(Contributor(authorEmail, "Code-Review")))(result.contributors)
-      assertResult(Seq(Contributor(authorEmail, "Code-Review"), Contributor(signerEmail, "author")))(result.members)
+      assertResult(Seq(Contributor(authorEmail.toLowerCase, "Code-Review")))(result.contributors)
+      assertResult(Seq(Contributor(authorEmail.toLowerCase, "Code-Review"), Contributor(signerEmail.toLowerCase, "author")))(result.members)
       assertResult(VisibleChangeStatus.ok)(result.changeStatus)
       assertResult("ok")(result.color)
     }

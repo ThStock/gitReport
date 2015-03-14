@@ -9,7 +9,7 @@ import org.eclipse.jgit.api.errors.NoHeadException
 import org.eclipse.jgit.errors.{MissingObjectException, RevWalkException}
 import org.eclipse.jgit.lib._
 import org.eclipse.jgit.revwalk._
-import org.eclipse.jgit.revwalk.filter.{AndRevFilter, RevFilter, CommitTimeRevFilter}
+import org.eclipse.jgit.revwalk.filter.{AndRevFilter, CommitTimeRevFilter, RevFilter}
 import org.eclipse.jgit.storage.file._
 
 import scala.collection.JavaConversions._
@@ -51,16 +51,16 @@ class RepoAnalyzer(repo: File, commitLimitDays: Long) {
 
   private def toChange(commit: RevCommit): Option[Change] = {
     val authIden = commit.getAuthorIdent
-    val footer: Seq[FooterElement] = commit
-      .getFooterLines.map(e => FooterElement(e.getKey, e.getValue)) ++
-      notesOf(commit)
+    val footerElements: Seq[FooterElement] = commit.getFooterLines
+      .map(e => FooterElement(e.getKey, e.getValue)) ++ notesOf(commit)
+
     Some(Change(
       authIden.getEmailAddress,
       authIden.getName,
       commit.getFullMessage,
       commit.getId.abbreviate(7).name,
       commit.getCommitTime,
-      footer
+      footerElements
     ))
   }
 
@@ -127,30 +127,42 @@ object RepoAnalyzer {
     val authorKey: String = "author"
     val author = Contributor(change.authorEmail, authorKey)
 
-    def lookup(username: String): String = authorsToEmails.getOrElse(username, username)
+    def lookup(username: String): String = {
+      val email = authorsToEmails.get(username)
+      if (email.isDefined) {
+        email.get.toLowerCase
+      } else {
+        username
+      }
+    }
 
     val signers: Seq[Contributor] = filterAndMap(change.footer, "Signed-off-by", lookup)
     val reviewers: Seq[Contributor] = filterAndMap(change.footer, "Code-Review", lookup)
 
     if (signers != Nil) {
-      val signerAuthor = Contributor(signers.head.email, authorKey)
+      val signerAuthor = Contributor(signers.head.email.toLowerCase, authorKey)
 
       val signersWithoutFirst = signers.map(_.copy(typ = authorKey))
         .filterNot(_ == signerAuthor)
 
-      VisibleChange(signerAuthor, Seq(author.copy(typ = "Code-Review")) ++ reviewers ++
+      VisibleChange(signerAuthor, Seq(author.copy(typ = "Code-Review", email = author.email.toLowerCase)) ++ reviewers ++
         signersWithoutFirst, change.commitTime, repoName)
 
     } else {
-      VisibleChange(author, reviewers ++ signers, change.commitTime, repoName)
+      VisibleChange(author.copy(email = author.email.toLowerCase), reviewers ++ signers, change.commitTime, repoName)
     }
 
   }
 
   private def filterAndMap(footers: Seq[FooterElement], key: String, lookup: String => String): Seq[Contributor] = {
-    footers
-      .filter(_.key.startsWith(key))
-      .map(foot => Contributor(foot.email.getOrElse(lookup(foot.value.trim)), foot.key))
+    footers.filter(_.key.startsWith(key)).map(foot => {
+      val emailOrName = if (foot.email.isDefined) {
+        foot.email.get.toLowerCase
+      } else {
+        lookup(foot.value.trim)
+      }
+      Contributor(emailOrName, foot.key)
+    })
   }
 
   def findRecursiv(files: Seq[File], filter: File => Boolean, matching: Seq[File] = Nil): Seq[File] = {
@@ -199,7 +211,7 @@ object RepoAnalyzer {
                     commitMsg: String,
                     id: String,
                     commitTime: Int,
-                    footer: Seq[FooterElement] = Seq()
+                    footer: Seq[FooterElement] = Nil
                      )
 
 }
