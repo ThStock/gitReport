@@ -94,14 +94,27 @@ object ChangeTypes {
         0
       } else {
         val (lower, upper) = in.sorted.splitAt(in.size / 2)
-        if (in.size % 2 == 0) (lower.last + upper.head) / 2.0 else upper.head
+        if (in.size % 2 == 0) (lower.last + upper.head) / 2d else upper.head
       }
     }
 
+    private val changeCountsByAuthor = changes.groupBy(_.author).toSeq.map(_._2.size)
+
     val changesPerDay: Double = {
-      val changeCounts = changes.groupBy(_.author).toSeq.map(_._2.size)
-      BigDecimal(median(changeCounts) / _repoActivityLimitInDays)
-        .setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
+      val medianChanges = median(changeCountsByAuthor)
+      val meanChanges: Double = if (changes == Nil) {
+        0d
+      } else {
+        allChangesCount.toDouble / changeCountsByAuthor.size.toDouble
+      }
+      val result = (medianChanges + meanChanges) / 2d / _repoActivityLimitInDays
+      BigDecimal(result).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
+    }
+
+    val mainComitters: Int = {
+      val devs = changeCountsByAuthor.map(score => Math.pow(score - changesPerDay, 2))
+      val stddev = Math.sqrt(devs.sum / devs.size)
+      changeCountsByAuthor.count(_ >= stddev.toInt)
     }
 
   }

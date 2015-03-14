@@ -103,7 +103,8 @@
         <p> <span class="octicon octicon-repo"></span> {{{repoName}}}
         <span title="{{{branchNamesText}}}" {{^branchCountOk}}class="branch-too-mutch"{{/branchCountOk}}><span class="octicon octicon-git-branch"></span>{{{branchCount}}}</span>
         <span class="activity-{{{activityIndex}}}"><span class="octicon octicon-pulse"></span> <span title="with / without review">{{{okChangesCount}}}/{{{allChangesCount}}}</span>
-        | <span title="changes per day">{{{changesPerDay}}}/d</span></span>
+        | <span title="changes per day and committer">{{{changesPerDay}}}<sub>dc<sub></span>
+        | <span title="main committers based on SD">{{{mainComitters}}}<sub>mc<sub></span></span>
         </p>
         <div class="bar"><div class="ok" style="width: {{{percentageOk}}}%;"></div></div>
         <div class="members">
