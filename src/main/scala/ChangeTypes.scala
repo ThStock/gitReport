@@ -40,15 +40,16 @@ object ChangeTypes {
     val ok = VisibleChangeStatus("ok")
   }
 
-  case class ContributorType(name:String) {
+  case class ContributorType(name: String) {
     val isAuthor = name == "author"
   }
 
-  case class Contributor(email: String, _typ: ContributorType, activity: Contributor.Activity = Activity.LOWEST) {
+  case class Contributor(email: String, _typ: ContributorType,
+                         activity: Contributor.Activity = Activity.LOWEST, noGerrit: Boolean = false) {
     val hash = RepoAnalyzer.md5(email)
     val isAuthor = _typ.isAuthor
     val activityValue = activity.key
-    val typ:String = _typ.name
+    val typ: String = _typ.name
 
   }
 
@@ -68,7 +69,7 @@ object ChangeTypes {
 
   }
 
-  case class VisibleRepo(repoName: String, changes: Seq[VisibleChange]
+  case class VisibleRepo(repoName: String, _changes: Seq[VisibleChange]
                          , branchNames: Seq[String], _repoActivityLimitInDays: Int, _activity: Int = 0) {
 
     val activityIndex = _activity match {
@@ -77,7 +78,7 @@ object ChangeTypes {
       case _ => "normal"
     }
 
-    val allChangesCount: Int = changes.size
+    val allChangesCount: Int = _changes.size
 
     val branchCount = branchNames.size
 
@@ -85,14 +86,22 @@ object ChangeTypes {
 
     val branchCountOk = branchCount < 2
 
-    val okChangesCount: Int = changes.count(_.changeStatus == VisibleChangeStatus.ok)
+    val okChangesCount: Int = _changes.count(_.changeStatus == VisibleChangeStatus.ok)
 
     def percentageOk(): Int = {
       val result: Double = okChangesCount.toDouble / allChangesCount.toDouble * 100
       result.toInt
     }
 
-    val members: Seq[Contributor] = VisibleRepo.toContibutors(changes)
+    val percentageOkGt66 = percentageOk() > 66
+
+    val percentageOkGt80 = percentageOk() > 80
+
+    val noGerrit = percentageOk() == 0 && _changes.count(_.contributors == Nil) == _changes.size
+
+    val changes = _changes
+
+    val members: Seq[Contributor] = VisibleRepo.toContibutors(_changes).map(_.copy(noGerrit = this.noGerrit))
 
     private def median(in: Seq[Int]): Double = {
       if (in == Nil) {
@@ -103,11 +112,11 @@ object ChangeTypes {
       }
     }
 
-    private val changeCountsByAuthor = changes.groupBy(_.author).toSeq.map(_._2.size)
+    private val changeCountsByAuthor = _changes.groupBy(_.author).toSeq.map(_._2.size)
 
     val changesPerDay: Double = {
       val medianChanges = median(changeCountsByAuthor)
-      val meanChanges: Double = if (changes == Nil) {
+      val meanChanges: Double = if (_changes == Nil) {
         0d
       } else {
         allChangesCount.toDouble / changeCountsByAuthor.size.toDouble

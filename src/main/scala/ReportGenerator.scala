@@ -9,18 +9,18 @@ import com.gilt.handlebars.scala.binding.dynamic._
 
 class ReportGenerator(repos: Seq[VisibleRepo]) {
 
-  def write(commitLimitDays: Int, displayLimit: Int, repoActivityLimitInDays: Int) {
+  def write(sprintLengthInDays: Int, displayLimit: Int, repoActivityLimit: Int) {
     if (repos != Nil) {
       val content: Seq[VisibleChange] = repos.flatMap(_.changes)
         .sortBy(_.commitTime).reverse
 
       writeByName("truckMap", content.take(displayLimit))
 
-      writeTruckByRepo(repoActivityLimitInDays, content, displayLimit, commitLimitDays)
+      writeTruckByRepo(repoActivityLimit, content, displayLimit, sprintLengthInDays)
     }
   }
 
-  private def writeTruckByRepo(repoActivityLimitInDays: Int, content: Seq[VisibleChange], displayLimit: Int, commitLimitDays: Int) {
+  private def writeTruckByRepo(repoActivityLimit: Int, content: Seq[VisibleChange], displayLimit: Int, commitLimitDays: Int) {
     val repoByName = repos.groupBy(_.repoName)
     def branchNamesOf(key: String) = repoByName.get(key).get.head.branchNames
 
@@ -30,16 +30,16 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
 
       val filterCommitDate = latestCommitDate - dayDelta * 86400L
       val contentListed = content
-        .filter(_.commitTime < filterCommitDate)
+        .filter(_.commitTime <= filterCommitDate)
         .take(displayLimit)
       if (contentListed != Nil) {
         val contentGrouped = contentListed
           .groupBy(_.repoName)
 
         val truckByProject: Seq[VisibleRepo] = contentGrouped.toSeq
-          .map(in => VisibleRepo(in._1, in._2, branchNamesOf(in._1), commitLimitDays, scoreOf(in._1, repoActivityLimitInDays, contentGrouped)))
-          .filter(_.changes.size > repoActivityLimitInDays)
-          .sortBy(_.repoName).sortBy(_.repoName).sortWith(_.percentageOk > _.percentageOk)
+          .map(in => VisibleRepo(in._1, in._2, branchNamesOf(in._1), commitLimitDays, scoreOf(in._1, repoActivityLimit, contentGrouped)))
+          .filter(_.changes.size > repoActivityLimit)
+          .sortBy(_.repoName).sortBy(_.allChangesCount).reverse.sortWith(_.percentageOk > _.percentageOk)
 
         if (truckByProject == Nil) {
           println("W: no repos will appear in report")

@@ -22,6 +22,15 @@
     margin-bottom: .5em;
     border-radius:3px;
   }
+  .bar-66 {
+    background-color: rgba(203, 75, 22, 0.5);
+  }
+  .bar-80 {
+    background-color: #073642;
+  }
+  .bar-no {
+    background-color: #073642;
+  }
   .bar .ok {
     background-color: #2aa198;
     height: 10px;
@@ -34,7 +43,7 @@
     border: 3px solid #073642;
     margin: 1em 0 1em 0;
     display: block;
-    padding: 0 .5em .5em .5em;
+    padding: 0 .5em 0 .5em;
   }
   .repo .title {
     margin-top: .6em;
@@ -46,6 +55,7 @@
     height: 30px;
     width: 30px;
     margin: 0;
+    margin-bottom: .6em;
     padding: 0;
     -webkit-transition: all .2s ease-in-out; /* Safari and Chrome */
     -moz-transition: all .2s ease-in-out; /* Firefox */
@@ -72,6 +82,9 @@
   }
   .contributor.high img {
     opacity: 0.8;
+  }
+  .contributor.no-gerrit-contrib img {
+    opacity: 0.6;
   }
   .contributor.highest img {
     opacity: 1.0;
@@ -117,28 +130,26 @@
       {{#repos}}
         <div class="repo">
           <div class="row title">
-            <div class="col-xs-5 title-name">
+            <div class="col-xs-6 title-name">
               <span class="octicon octicon-repo"></span> {{{repoName}}}
             </div>
-            <div class="col-xs-2">
-            <span title="{{{branchNamesText}}}" {{^branchCountOk}}class="branch-too-mutch"{{/branchCountOk}}><span class="octicon octicon-git-branch"></span>{{{branchCount}}}</span>
-            </div>
-            <div class="col-xs-5 title-details">
-                    <span class="activity-{{{activityIndex}}}"><span class="octicon octicon-pulse"></span> <span title="with / without review">{{{okChangesCount}}}/{{{allChangesCount}}}</span>
-                    | <span title="changes per day and committer">{{{changesPerDay}}}<sub>dc<sub></span>
-                    | <span title="main committers based on SD">{{{mainComitters}}}<sub>mc<sub></span></span>
+            <div class="col-xs-6 title-details">
+                    <span class="activity-{{{activityIndex}}}"><span class="octicon octicon-pulse"></span> <span title="with / without review">{{^noGerrit}}{{{okChangesCount}}}/{{/noGerrit}}{{{allChangesCount}}}</span>
+                    <span title="{{{branchNamesText}}}" {{^branchCountOk}}class="branch-too-mutch"{{/branchCountOk}}><span class="octicon octicon-git-branch"></span>{{{branchCount}}}</span>
+                    <span title="changes per day and committer">{{{changesPerDay}}}<sub>dc<sub></span>
+                    <span title="main committers based on SD">{{{mainComitters}}}<sub>mc<sub></span></span>
             </div>
           </div>
           <div class="row">
             <div class="col-xs-12">
-              <div class="bar"><div class="ok" style="width: {{{percentageOk}}}%;"></div></div>
+              <div class="bar {{#percentageOkGt66}}bar-66{{/percentageOkGt66}} {{#percentageOkGt80}}bar-80{{/percentageOkGt80}} {{#noGerrit}}bar-no{{/noGerrit}}"><div class="ok" style="width: {{{percentageOk}}}%;"></div></div>
             </div>
           </div>
           <div class="row">
             <div class="col-xs-12">
             <div class="members">
                     {{#members}}
-                      <span class="contributor {{{activityValue}}}" >
+                      <span class="contributor {{{activityValue}}} {{#noGerrit}}no-gerrit-contrib{{/noGerrit}}" >
                         <img src="https://lb.gravatar.com/avatar/{{{hash}}}?s=160&amp;d=identicon" title="{{{email}}} - {{{typ}}}" />
                       </span>
                     {{/members}}
