@@ -104,7 +104,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult(true)(result.author.isAuthor)
       assertResult("author")(result.author.typ)
       assertResult(7)(result.commitTime)
-      assertResult("Time: 1970-01-01T01:00:07\nRepo: a")(result.title)
+      assertResult("Time: 1970-01-01 01:00:07\nRepo: a")(result.title)
       assertResult(Nil)(result.contributors)
       assertResult(Seq(Contributor(authorEmail, "author")))(result.members)
       assertResult(VisibleChangeStatus.warn)(result.changeStatus)
@@ -132,7 +132,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult(true)(result.author.isAuthor)
       assertResult("author")(result.author.typ)
       assertResult(11)(result.commitTime)
-      assertResult("Time: 1970-01-01T01:00:11\nRepo: a")(result.title)
+      assertResult("Time: 1970-01-01 01:00:11\nRepo: a")(result.title)
       assertResult(Seq(Contributor("Some", "Code-Review"),
         Contributor(reviewerEmail.toLowerCase, "Code-Review")))(result.contributors)
       assertResult(Seq(Contributor("Some", "Code-Review"), Contributor(reviewerEmail.toLowerCase, "Code-Review"),
@@ -158,7 +158,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult(true)(result.author.isAuthor)
       assertResult("author")(result.author.typ)
       assertResult(81)(result.commitTime)
-      assertResult("Time: 1970-01-01T01:01:21\nRepo: a")(result.title)
+      assertResult("Time: 1970-01-01 01:01:21\nRepo: a")(result.title)
       assertResult(Seq(Contributor(authorEmail.toLowerCase, "Code-Review")))(result.contributors)
       assertResult(Seq(Contributor(authorEmail.toLowerCase, "Code-Review"), Contributor(signerEmail.toLowerCase, "author")))(result.members)
       assertResult(VisibleChangeStatus.ok)(result.changeStatus)
