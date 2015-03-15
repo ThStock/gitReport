@@ -1,7 +1,7 @@
 import java.util.Date
 import java.util.concurrent.atomic.AtomicInteger
 
-import ChangeTypes.{Contributor, VisibleChange, VisibleRepo}
+import ChangeTypes.{ContributorType, Contributor, VisibleChange, VisibleRepo}
 
 object DemoData {
 
@@ -11,7 +11,7 @@ object DemoData {
     def chB = vChange("B")(_)
     def chE = vChange("E")(_)
 
-    Seq.tabulate(10)(i => vRepo("r_" + (i + 1), Seq(chE, chA, chB)))
+    Seq.tabulate(10)(i => vRepo("git-repo-" + (i + 1), Seq(chE, chA, chB, chB, chB)))
   }
 
   private def vRepo(name: String, _changes: Seq[(String) => VisibleChange]) = {
@@ -23,9 +23,17 @@ object DemoData {
   }
 
   private def vChange(emailPrefix: String)(repoName: String) = {
-    val now = (new Date().getTime / 1000L).toInt + counter.incrementAndGet() * 1000
-    val c1 = Contributor(emailPrefix + "@example.org", "author")
-    VisibleChange(c1, Nil, now, repoName)
+    val next = counter.incrementAndGet()
+    val now = (new Date().getTime / 1000L).toInt + next * 1000
+    val c1 = Contributor(emailPrefix + "@example.org", Contributor.AUTHOR)
+
+    val reviewer = if (next % 5 == 0) {
+      Seq(c1.copy(_typ = ContributorType("any")))
+    } else {
+      Seq(c1.copy(_typ = Contributor.REVIWER))
+    }
+
+    VisibleChange(c1, reviewer, now, repoName)
   }
 
   val counter = new AtomicInteger(1)

@@ -39,7 +39,7 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
         val truckByProject: Seq[VisibleRepo] = contentGrouped.toSeq
           .map(in => VisibleRepo(in._1, in._2, branchNamesOf(in._1), commitLimitDays, scoreOf(in._1, repoActivityLimitInDays, contentGrouped)))
           .filter(_.changes.size > repoActivityLimitInDays)
-          .sortBy(_.repoName).sortWith(_.percentageOk > _.percentageOk)
+          .sortBy(_.repoName).sortBy(_.repoName).sortWith(_.percentageOk > _.percentageOk)
 
         if (truckByProject == Nil) {
           println("W: no repos will appear in report")

@@ -40,14 +40,21 @@ object ChangeTypes {
     val ok = VisibleChangeStatus("ok")
   }
 
-  case class Contributor(email: String, typ: String, activity: Contributor.Activity = Activity.LOWEST) {
+  case class ContributorType(name:String) {
+    val isAuthor = name == "author"
+  }
+
+  case class Contributor(email: String, _typ: ContributorType, activity: Contributor.Activity = Activity.LOWEST) {
     val hash = RepoAnalyzer.md5(email)
-    val isAuthor = typ == "author"
+    val isAuthor = _typ.isAuthor
     val activityValue = activity.key
+    val typ:String = _typ.name
 
   }
 
   object Contributor {
+    val AUTHOR: ContributorType = ContributorType("author")
+    val REVIWER = ContributorType("Code-Review")
 
     case class Activity(key: String)
 
@@ -126,7 +133,7 @@ object ChangeTypes {
 
       val allMembers = changes.flatMap(_.members)
       val allMembersEmails = allMembers.map(_.email).toSet
-      val allChangesByAuthor = changes.groupBy(_.author.copy(typ = "player"))
+      val allChangesByAuthor = changes.groupBy(_.author.copy(_typ = ContributorType("player")))
       val allChangesByContributor = changes.groupBy(_.contributors).flatMap(in => {
         in._1.map(key => (EmailAndTyp.by(key), in._2))
       })
@@ -169,7 +176,7 @@ object ChangeTypes {
       }
 
       allMembers
-        .map(in => in.copy(typ = "player"))
+        .map(in => in.copy(_typ = ContributorType("player")))
         .toSet[Contributor]
         .map(in => in.copy(activity = selectActivity(in)))
         .toSeq

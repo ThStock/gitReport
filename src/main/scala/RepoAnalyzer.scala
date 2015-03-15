@@ -2,7 +2,7 @@ import java.io._
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
-import ChangeTypes.{Contributor, VisibleChange, VisibleRepo}
+import ChangeTypes.{ContributorType, Contributor, VisibleChange, VisibleRepo}
 import RepoAnalyzer._
 import org.eclipse.jgit.api._
 import org.eclipse.jgit.api.errors.NoHeadException
@@ -124,8 +124,7 @@ object RepoAnalyzer {
   }
 
   def toVisChange(repoName: String, authorsToEmails: Map[String, String])(change: Change): VisibleChange = {
-    val authorKey: String = "author"
-    val author = Contributor(change.authorEmail, authorKey)
+    val author = Contributor(change.authorEmail, Contributor.AUTHOR)
 
     def lookup(username: String): String = {
       val email = authorsToEmails.get(username)
@@ -140,12 +139,12 @@ object RepoAnalyzer {
     val reviewers: Seq[Contributor] = filterAndMap(change.footer, "Code-Review", lookup)
 
     if (signers != Nil) {
-      val signerAuthor = Contributor(signers.head.email.toLowerCase, authorKey)
+      val signerAuthor = Contributor(signers.head.email.toLowerCase, Contributor.AUTHOR)
 
-      val signersWithoutFirst = signers.map(_.copy(typ = authorKey))
+      val signersWithoutFirst = signers.map(_.copy(_typ = Contributor.AUTHOR))
         .filterNot(_ == signerAuthor)
 
-      VisibleChange(signerAuthor, Seq(author.copy(typ = "Code-Review", email = author.email.toLowerCase)) ++ reviewers ++
+      VisibleChange(signerAuthor, Seq(author.copy(_typ = Contributor.REVIWER, email = author.email.toLowerCase)) ++ reviewers ++
         signersWithoutFirst, change.commitTime, repoName)
 
     } else {
@@ -161,7 +160,7 @@ object RepoAnalyzer {
       } else {
         lookup(foot.value.trim)
       }
-      Contributor(emailOrName, foot.key)
+      Contributor(emailOrName, ContributorType(foot.key))
     })
   }
 

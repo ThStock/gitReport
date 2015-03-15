@@ -66,7 +66,7 @@ class ChangeTypesSpec extends FeatureSpec with GivenWhenThen {
       assert(2 == repo.mainComitters)
     }
 
-    def newVisChange(authorEmail: String) = VisibleChange(Contributor(authorEmail + "@example.org", "author"), Nil, 0, "r1")
+    def newVisChange(authorEmail: String) = VisibleChange(Contributor(authorEmail + "@example.org", Contributor.AUTHOR), Nil, 0, "r1")
   }
 
 }

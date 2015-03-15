@@ -106,7 +106,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult(7)(result.commitTime)
       assertResult("Time: 1970-01-01 01:00:07\nRepo: a")(result.title)
       assertResult(Nil)(result.contributors)
-      assertResult(Seq(Contributor(authorEmail, "author")))(result.members)
+      assertResult(Seq(Contributor(authorEmail, Contributor.AUTHOR)))(result.members)
       assertResult(VisibleChangeStatus.warn)(result.changeStatus)
       assertResult("warn")(result.color)
     }
@@ -133,10 +133,10 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult("author")(result.author.typ)
       assertResult(11)(result.commitTime)
       assertResult("Time: 1970-01-01 01:00:11\nRepo: a")(result.title)
-      assertResult(Seq(Contributor("Some", "Code-Review"),
-        Contributor(reviewerEmail.toLowerCase, "Code-Review")))(result.contributors)
-      assertResult(Seq(Contributor("Some", "Code-Review"), Contributor(reviewerEmail.toLowerCase, "Code-Review"),
-        Contributor(authorEmail.toLowerCase, "author")))(result.members)
+      assertResult(Seq(Contributor("Some", Contributor.REVIWER),
+        Contributor(reviewerEmail.toLowerCase, Contributor.REVIWER)))(result.contributors)
+      assertResult(Seq(Contributor("Some", Contributor.REVIWER), Contributor(reviewerEmail.toLowerCase, Contributor.REVIWER),
+        Contributor(authorEmail.toLowerCase, Contributor.AUTHOR)))(result.members)
       assertResult(VisibleChangeStatus.ok)(result.changeStatus)
       assertResult("ok")(result.color)
     }
@@ -159,8 +159,8 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult("author")(result.author.typ)
       assertResult(81)(result.commitTime)
       assertResult("Time: 1970-01-01 01:01:21\nRepo: a")(result.title)
-      assertResult(Seq(Contributor(authorEmail.toLowerCase, "Code-Review")))(result.contributors)
-      assertResult(Seq(Contributor(authorEmail.toLowerCase, "Code-Review"), Contributor(signerEmail.toLowerCase, "author")))(result.members)
+      assertResult(Seq(Contributor(authorEmail.toLowerCase, Contributor.REVIWER)))(result.contributors)
+      assertResult(Seq(Contributor(authorEmail.toLowerCase, Contributor.REVIWER), Contributor(signerEmail.toLowerCase, Contributor.AUTHOR)))(result.members)
       assertResult(VisibleChangeStatus.ok)(result.changeStatus)
       assertResult("ok")(result.color)
     }

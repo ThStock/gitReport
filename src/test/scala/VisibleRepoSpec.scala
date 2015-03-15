@@ -1,16 +1,18 @@
 import ChangeTypes.Contributor.Activity
-import ChangeTypes.{Contributor, VisibleChange, VisibleRepo}
+import ChangeTypes.{ContributorType, Contributor, VisibleChange, VisibleRepo}
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
 class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
 
-  def typCopy(c: Contributor, _activity: Activity) = c.copy(activity = _activity, typ = "player")
+  def typCopy(c: Contributor, _activity: Activity) = c.copy(activity = _activity,
+    _typ = ContributorType("player"))
 
-  def change(c: Contributor, others: Seq[Contributor] = Nil) = VisibleChange(c, others.map(_.copy(typ = "check")), 0, "any")
+  def change(c: Contributor, others: Seq[Contributor] = Nil) = //
+    VisibleChange(c, others.map(_.copy(_typ = ContributorType("check"))), 0, "any")
 
-  val c0q = Contributor("q@example.org", "any")
-  val c1a = Contributor("a@example.org", "any")
-  val c2c = Contributor("c@example.org", "any")
+  val c0q = Contributor("q@example.org", ContributorType("any"))
+  val c1a = Contributor("a@example.org", ContributorType("any"))
+  val c2c = Contributor("c@example.org", ContributorType("any"))
 
   scenario("Nil changes") {
 

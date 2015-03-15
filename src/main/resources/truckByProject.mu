@@ -8,7 +8,7 @@
   body {
     background-color: #002b36;
     font-family: "Source Code Pro", Consolas, monospace;
-    font-weight: bolder;
+    font-size: 150%;
     color: #eee8d5;
     text-align: center;
   }
@@ -96,6 +96,12 @@
     padding-left: .5em;
     padding-right: .5em;
   }
+  .title-name {
+    text-align: left;
+  }
+  .title-details {
+    text-align: right;
+  }
 </style>
 </head>
 
@@ -110,20 +116,35 @@
       <div class="col-md-4 colled">
       {{#repos}}
         <div class="repo">
-        <p class="title"> <span class="octicon octicon-repo"></span> {{{repoName}}}
-        <span title="{{{branchNamesText}}}" {{^branchCountOk}}class="branch-too-mutch"{{/branchCountOk}}><span class="octicon octicon-git-branch"></span>{{{branchCount}}}</span>
-        <span class="activity-{{{activityIndex}}}"><span class="octicon octicon-pulse"></span> <span title="with / without review">{{{okChangesCount}}}/{{{allChangesCount}}}</span>
-        | <span title="changes per day and committer">{{{changesPerDay}}}<sub>dc<sub></span>
-        | <span title="main committers based on SD">{{{mainComitters}}}<sub>mc<sub></span></span>
-        </p>
-        <div class="bar"><div class="ok" style="width: {{{percentageOk}}}%;"></div></div>
-        <div class="members">
-        {{#members}}
-          <span class="contributor {{{activityValue}}}" >
-            <img src="https://lb.gravatar.com/avatar/{{{hash}}}?s=160&amp;d=identicon" title="{{{email}}} - {{{typ}}}" />
-          </span>
-        {{/members}}
-        </div>
+          <div class="row title">
+            <div class="col-xs-5 title-name">
+              <span class="octicon octicon-repo"></span> {{{repoName}}}
+            </div>
+            <div class="col-xs-2">
+            <span title="{{{branchNamesText}}}" {{^branchCountOk}}class="branch-too-mutch"{{/branchCountOk}}><span class="octicon octicon-git-branch"></span>{{{branchCount}}}</span>
+            </div>
+            <div class="col-xs-5 title-details">
+                    <span class="activity-{{{activityIndex}}}"><span class="octicon octicon-pulse"></span> <span title="with / without review">{{{okChangesCount}}}/{{{allChangesCount}}}</span>
+                    | <span title="changes per day and committer">{{{changesPerDay}}}<sub>dc<sub></span>
+                    | <span title="main committers based on SD">{{{mainComitters}}}<sub>mc<sub></span></span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-xs-12">
+              <div class="bar"><div class="ok" style="width: {{{percentageOk}}}%;"></div></div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-xs-12">
+            <div class="members">
+                    {{#members}}
+                      <span class="contributor {{{activityValue}}}" >
+                        <img src="https://lb.gravatar.com/avatar/{{{hash}}}?s=160&amp;d=identicon" title="{{{email}}} - {{{typ}}}" />
+                      </span>
+                    {{/members}}
+                    </div>
+            </div>
+          </div>
         </div>
       {{/repos}}
       </div>
