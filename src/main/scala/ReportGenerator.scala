@@ -10,15 +10,17 @@ import com.gilt.handlebars.scala.binding.dynamic._
 class ReportGenerator(repos: Seq[VisibleRepo]) {
 
   def write(commitLimitDays: Int, displayLimit: Int, repoActivityLimitInDays: Int) {
-    val content: Seq[VisibleChange] = repos.flatMap(_.changes)
-      .sortBy(_.commitTime).reverse
+    if (repos != Nil) {
+      val content: Seq[VisibleChange] = repos.flatMap(_.changes)
+        .sortBy(_.commitTime).reverse
 
-    writeByName("truckMap", content.take(displayLimit))
+      writeByName("truckMap", content.take(displayLimit))
 
-    writeTruckByRepo(repoActivityLimitInDays, content, displayLimit, commitLimitDays)
+      writeTruckByRepo(repoActivityLimitInDays, content, displayLimit, commitLimitDays)
+    }
   }
 
-  def writeTruckByRepo(repoActivityLimitInDays: Int, content: Seq[VisibleChange], displayLimit: Int, commitLimitDays: Int) {
+  private def writeTruckByRepo(repoActivityLimitInDays: Int, content: Seq[VisibleChange], displayLimit: Int, commitLimitDays: Int) {
     val repoByName = repos.groupBy(_.repoName)
     def branchNamesOf(key: String) = repoByName.get(key).get.head.branchNames
 
@@ -30,24 +32,31 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
       val contentListed = content
         .filter(_.commitTime < filterCommitDate)
         .take(displayLimit)
-      val contentGrouped = contentListed
-        .groupBy(_.repoName)
+      if (contentListed != Nil) {
+        val contentGrouped = contentListed
+          .groupBy(_.repoName)
 
-      val truckByProject: Seq[VisibleRepo] = contentGrouped.toSeq
-        .map(in => VisibleRepo(in._1, in._2, branchNamesOf(in._1), commitLimitDays, scoreOf(in._1, repoActivityLimitInDays, contentGrouped)))
-        .filter(_.changes.size > repoActivityLimitInDays)
-        .sortBy(_.repoName).sortWith(_.percentageOk > _.percentageOk)
+        val truckByProject: Seq[VisibleRepo] = contentGrouped.toSeq
+          .map(in => VisibleRepo(in._1, in._2, branchNamesOf(in._1), commitLimitDays, scoreOf(in._1, repoActivityLimitInDays, contentGrouped)))
+          .filter(_.changes.size > repoActivityLimitInDays)
+          .sortBy(_.repoName).sortWith(_.percentageOk > _.percentageOk)
 
-      case class Slot(repos: Seq[VisibleRepo], name: String)
+        if (truckByProject == Nil) {
+          println("W: no repos will appear in report")
+        }
 
-      case class Segmented(slots: Seq[Slot], newestCommitDate: String, latestCommitDate: String)
-      val segments = ReportGenerator.slidingsOf(3)(truckByProject)
-      val segemnts = Segmented(slots = Seq(Slot(segments(0), "left"), Slot(segments(2), "right"), Slot(segments(1), "center")),
-        latestCommitDate = ReportGenerator.formatedDateBy(contentListed.map(_.commitTime).min * 1000L),
-        newestCommitDate = ReportGenerator.formatedDateBy(filterCommitDate * 1000L)
-      )
-      writeByName("truckByProject", segemnts, "truckByProject" + dayDelta)
+        case class Slot(repos: Seq[VisibleRepo])
 
+        case class Segmented(slots: Seq[Slot], newestCommitDate: String, latestCommitDate: String)
+        val segments = ReportGenerator.slidingsOf(3)(truckByProject)
+
+        val segemnts = Segmented(slots = Seq(Slot(segments(0)), Slot(segments(1)), Slot(segments(2))),
+          latestCommitDate = ReportGenerator.formatedDateBySecs(contentListed.map(_.commitTime).min),
+          newestCommitDate = ReportGenerator.formatedDateBySecs(filterCommitDate)
+        )
+        writeByName("truckByProject", segemnts, "truckByProject" + dayDelta)
+
+      }
     }
 
     Range(0, 5).foreach(write)
@@ -56,6 +65,7 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
     copyToOutput("octoicons/octicons.eot")
     copyToOutput("octoicons/octicons.svg")
     copyToOutput("octoicons/octicons.woff")
+    copyToOutput("bootstrap-3.3.2-dist/css/bootstrap.min.css")
   }
 
   case class RepoGroup(amount: Int)
@@ -170,11 +180,15 @@ object ReportGenerator {
     getClass.getResourceAsStream(fileName)
   }
 
-  def formatedDateBy(date: Long): String = {
+  def formatedDateBySecs(date: Long): String = {
+    formatedDateByMillis(1000L * date)
+  }
+
+  private def formatedDateByMillis(date: Long): String = {
     formatedDate(new Date(date))
   }
 
-  def formatedDate(date: Date): String = {
-    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(date)
+  private def formatedDate(date: Date): String = {
+    new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss").format(date)
   }
 }

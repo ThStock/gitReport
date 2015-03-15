@@ -1,11 +1,16 @@
 <html>
 <head>
 <title>Gerrit Truck by Repo Report</title>
+  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAAZiS0dEAH4AAAAAv6Hl0QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB94CAxcwI+jd2QUAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAAzklEQVQ4y8WTuxHCQAxE3x4eEpuMCqARaiAmpBGaoQZmqICcDqiAGNtL4N8Z83EAg5LT7Jx2Je0d/DsEMD3JoYBJDkkprqtSO3AGZEAKbEBHcArMamwBCgCWkUACj1GMIlSgMP1i8ZmsJbAc0Ve5R5KEfmNqc70p8rMOLDDVGV/SCJLf2Dg/BCeFCDlMCnFZ51rukwiD8/b23kbjeivdko17c720sSWJSJtdxc69tJHQKNIWqZFWJ5UMbRy+hT5aD6QPNjaEFlh6MNDf+413oHNZGVgDxJMAAAAASUVORK5CYII=" />
+  <link rel="stylesheet" href="./bootstrap-3.3.2-dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="./octoicons/octicons.css">
 <style>
   body {
     background-color: #002b36;
     font-family: "Source Code Pro", Consolas, monospace;
+    font-weight: bolder;
     color: #eee8d5;
+    text-align: center;
   }
   .branch-too-mutch {
     color: #dc322f;
@@ -15,19 +20,25 @@
     height: 10px;
     background-color: #dc322f;
     margin-bottom: .5em;
+    border-radius:3px;
   }
   .bar .ok {
     background-color: #2aa198;
     height: 10px;
     width: 100%;
+    border-radius:3px;
   }
   .repo {
-    width: 95%;
+    width: 100%;
     border-radius:9px;
     border: 3px solid #073642;
-    margin-bottom: 1em;
-    display: inline-block;
-    padding-bottom: .3em;
+    margin: 1em 0 1em 0;
+    display: block;
+    padding: 0 .5em .5em .5em;
+  }
+  .repo .title {
+    margin-top: .6em;
+    margin-bottom: .6em;
   }
   .contributor img {
     border-radius:3px;
@@ -81,26 +92,25 @@
   .activity-high {
     color: #2aa198;
   }
-
-  #left { float:left; width:33%; }
-  #right { float:right; width:33%; }
-  #center { margin-left:33%; margin-right:33%; }
-  #clear { clear:both; }
-  #left, #right, #center { padding:1px }
-
+  .colled {
+    padding-left: .5em;
+    padding-right: .5em;
+  }
 </style>
-  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAAZiS0dEAH4AAAAAv6Hl0QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB94CAxcwI+jd2QUAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAAzklEQVQ4y8WTuxHCQAxE3x4eEpuMCqARaiAmpBGaoQZmqICcDqiAGNtL4N8Z83EAg5LT7Jx2Je0d/DsEMD3JoYBJDkkprqtSO3AGZEAKbEBHcArMamwBCgCWkUACj1GMIlSgMP1i8ZmsJbAc0Ve5R5KEfmNqc70p8rMOLDDVGV/SCJLf2Dg/BCeFCDlMCnFZ51rukwiD8/b23kbjeivdko17c720sSWJSJtdxc69tJHQKNIWqZFWJ5UMbRy+hT5aD6QPNjaEFlh6MNDf+413oHNZGVgDxJMAAAAASUVORK5CYII=" />
-  <link rel="stylesheet" href="./octoicons/octicons.css">
 </head>
-<body style="text-align: center;">
-<h5>Gerrit Truck by Repo Report ({{{reportDate}}} | {{{content.newestCommitDate}}} - {{{content.latestCommitDate}}})</h5>
-<div id="container">
+
+<body>
+<h5>Gerrit Truck by Repo Report ({{{reportDate}}})</h5>
+<h6>{{{content.newestCommitDate}}} - {{{content.latestCommitDate}}}</h6>
+
+<div class="container-fluid">
+  <div class="row">
   {{#content.slots}}
-    <div id="{{{name}}}">
       <div class="content">
+      <div class="col-md-4 colled">
       {{#repos}}
         <div class="repo">
-        <p> <span class="octicon octicon-repo"></span> {{{repoName}}}
+        <p class="title"> <span class="octicon octicon-repo"></span> {{{repoName}}}
         <span title="{{{branchNamesText}}}" {{^branchCountOk}}class="branch-too-mutch"{{/branchCountOk}}><span class="octicon octicon-git-branch"></span>{{{branchCount}}}</span>
         <span class="activity-{{{activityIndex}}}"><span class="octicon octicon-pulse"></span> <span title="with / without review">{{{okChangesCount}}}/{{{allChangesCount}}}</span>
         | <span title="changes per day and committer">{{{changesPerDay}}}<sub>dc<sub></span>
@@ -117,9 +127,8 @@
         </div>
       {{/repos}}
       </div>
-    </div>
   {{/content.slots}}
-  <div id="clear">-</div>
+  </div>
 </div>
 </body>
 </html>

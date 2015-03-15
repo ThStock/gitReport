@@ -1,5 +1,3 @@
-import java.util.Date
-
 import ChangeTypes.Contributor.Activity
 
 object ChangeTypes {
@@ -20,7 +18,7 @@ object ChangeTypes {
       case _ => "warn"
     }
 
-    private def formatDate(date: Int) = ReportGenerator.formatedDate(new Date(date * 1000L))
+    private def formatDate(date: Int) = ReportGenerator.formatedDateBySecs(date)
 
     val title = """|
                   |Time: %s
@@ -108,7 +106,7 @@ object ChangeTypes {
         allChangesCount.toDouble / changeCountsByAuthor.size.toDouble
       }
       val result = (medianChanges + meanChanges) / 2d / _repoActivityLimitInDays
-      BigDecimal(result).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
+      BigDecimal(result).setScale(1, BigDecimal.RoundingMode.HALF_UP).toDouble
     }
 
     val mainComitters: Int = {
