@@ -37,6 +37,13 @@
     width: 100%;
     border-radius:3px;
   }
+  .bar .needle {
+    position: absolute;
+    width: 1px;
+    background-color: #002b36;
+    height: 10px;
+    top: 0;
+  }
   .repo {
     width: 100%;
     border-radius:9px;
@@ -115,6 +122,10 @@
   .title-details {
     text-align: right;
   }
+  .glow {
+    color: #eee8d5;
+    font-weight: bolder;
+  }
 </style>
 </head>
 
@@ -137,12 +148,13 @@
                     <span class="activity-{{{activityIndex}}}"><span class="octicon octicon-pulse"></span> <span title="with / without review">{{^noGerrit}}{{{okChangesCount}}}/{{/noGerrit}}{{{allChangesCount}}}</span>
                     <span title="{{{branchNamesText}}}" {{^branchCountOk}}class="branch-too-mutch"{{/branchCountOk}}><span class="octicon octicon-git-branch"></span>{{{branchCount}}}</span>
                     <span title="changes per day and committer">{{{changesPerDay}}}<sub>dc<sub></span>
-                    <span title="main committers based on SD">{{{mainComitters}}}<sub>mc<sub></span></span>
+                    <span class="{{#topComitter}}glow{{/topComitter}}" title="main committers based on SD">{{{mainComitters}}}<sub>mc<sub></span></span>
             </div>
           </div>
           <div class="row">
             <div class="col-xs-12">
-              <div class="bar {{#percentageOkGt66}}bar-66{{/percentageOkGt66}} {{#percentageOkGt80}}bar-80{{/percentageOkGt80}} {{#noGerrit}}bar-no{{/noGerrit}}"><div class="ok" style="width: {{{percentageOk}}}%;"></div></div>
+              <div class="bar {{#percentageOkGt66}}bar-66{{/percentageOkGt66}} {{#percentageOkGt80}}bar-80{{/percentageOkGt80}} {{#noGerrit}}bar-no{{/noGerrit}}"><div class="ok" style="width: {{{percentageOk}}}%;"></div>
+              {{^noGerrit}}<div class="needle" style="left: 66%;"></div><div class="needle" style="left: 80%;"></div>{{/noGerrit}}</div>
             </div>
           </div>
           <div class="row">

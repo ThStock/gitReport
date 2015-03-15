@@ -39,16 +39,29 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
         val truckByProject: Seq[VisibleRepo] = contentGrouped.toSeq
           .map(in => VisibleRepo(in._1, in._2, branchNamesOf(in._1), commitLimitDays, scoreOf(in._1, repoActivityLimit, contentGrouped)))
           .filter(_.changes.size > repoActivityLimit)
-          .sortBy(_.repoName).sortBy(_.allChangesCount).reverse.sortWith(_.percentageOk > _.percentageOk)
 
         if (truckByProject == Nil) {
           println("W: no repos will appear in report")
         }
 
+        val topCommitts = if (truckByProject != Nil) {
+          truckByProject.filter(_._activity > 1).map(_.mainComitters).max
+        } else {
+          0
+        }
+        val markedTopComitter = truckByProject
+          .map(r => if (r.mainComitters == topCommitts && r._activity > 1) {
+          r.copy(topComitter = true)
+        } else {
+          r
+        })
+
         case class Slot(repos: Seq[VisibleRepo])
 
         case class Segmented(slots: Seq[Slot], newestCommitDate: String, latestCommitDate: String)
-        val segments = ReportGenerator.slidingsOf(3)(truckByProject)
+        val segments = ReportGenerator.slidingsOf(3)(markedTopComitter
+          .sortBy(_.repoName).sortBy(_.allChangesCount).reverse.sortWith(_.percentageOk > _.percentageOk)
+        )
 
         val segemnts = Segmented(slots = Seq(Slot(segments(0)), Slot(segments(1)), Slot(segments(2))),
           latestCommitDate = ReportGenerator.formatedDateBySecs(contentListed.map(_.commitTime).min),

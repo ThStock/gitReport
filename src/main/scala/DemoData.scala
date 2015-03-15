@@ -29,11 +29,7 @@ object DemoData {
   private def vRepo(name: String, number: Int, _changes: Seq[(String) => VisibleChange]) = {
     VisibleRepo(repoName = name + number,
       _changes = _changes.map(_.apply(name + number)),
-      branchNames = if (number % 2 == 0) {
-        Seq("a")
-      } else {
-        Seq("b", "c")
-      },
+      branchNames = Seq.tabulate(number % 3 + 1)(_ + "b"),
       _repoActivityLimitInDays = 10,
       _activity = 10)
   }

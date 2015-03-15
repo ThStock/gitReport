@@ -70,7 +70,8 @@ object ChangeTypes {
   }
 
   case class VisibleRepo(repoName: String, _changes: Seq[VisibleChange]
-                         , branchNames: Seq[String], _repoActivityLimitInDays: Int, _activity: Int = 0) {
+                         , branchNames: Seq[String], _repoActivityLimitInDays: Int,
+                         _activity: Int = 0, topComitter:Boolean = false) {
 
     val activityIndex = _activity match {
       case i if i > 1 => "high"
@@ -84,7 +85,7 @@ object ChangeTypes {
 
     val branchNamesText = branchNames.map(_.replaceFirst("refs/heads/", "")).mkString("\n")
 
-    val branchCountOk = branchCount < 2
+    val branchCountOk = branchCount <= 2
 
     val okChangesCount: Int = _changes.count(_.changeStatus == VisibleChangeStatus.ok)
 
