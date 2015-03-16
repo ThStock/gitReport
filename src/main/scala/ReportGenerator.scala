@@ -158,35 +158,25 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
 object ReportGenerator {
 
   def slidingsOf[A](maxLength: Int)(sortedIn: Seq[A]): Seq[Seq[A]] = {
-    val slots: Int = sortedIn.size / maxLength
-
-    if (sortedIn.length < maxLength) {
-      val toFill = (maxLength - sortedIn.length) / 2
-      val rightFill = toFill + toFill + sortedIn.length match {
-        case a if a < maxLength => toFill + 1
-        case _ => toFill
-      }
-
-      Seq.fill(maxLength)(Nil).take(toFill) ++ sortedIn.map(Seq(_)) ++ Seq.fill(maxLength)(Nil).take(rightFill)
-    } else {
-      val slidings: Seq[Seq[A]] = sortedIn.sliding(slots, slots).toList
-      if (slidings.length > maxLength) {
-        val newSliding: Seq[Seq[A]] = sortedIn.sliding(slots + 1, slots + 1).toList
-        val slidingSizes = newSliding.map(_.size)
-        val slidingDiff = slidingSizes.max - slidingSizes.min
-        if (newSliding.length != maxLength || slidingDiff > 1) {
-          val right: Seq[Seq[A]] = slidings.takeRight(slidings.length - maxLength)
-          val last = slidings(maxLength - 1) ++ right.flatten
-          val result: Seq[Seq[A]] = slidings.updated(maxLength - 1, last)
-          result.take(maxLength)
-        } else {
-          newSliding
-        }
+    def slide(_maxLength: Int, _fillMod: Int, _fillPerSlot: Int, _sortedIn: Seq[A]): Seq[Seq[A]] = {
+      val mod = if (_fillMod > 0) {
+        _fillPerSlot + 1
       } else {
-        slidings
+        _fillPerSlot
+      }
+      if (_sortedIn == Nil) {
+        Nil
+      } else {
+        Seq(_sortedIn.take(mod)) ++ slide(_maxLength, _fillMod - 1, _fillPerSlot, _sortedIn.drop(mod))
       }
     }
 
+    val result = slide(maxLength, sortedIn.size % maxLength, sortedIn.size / maxLength, sortedIn)
+    if (result.size < maxLength) {
+      result ++ Seq.fill(maxLength - result.size)(Nil)
+    } else {
+      result
+    }
   }
 
   private def fileFrom(fileName: String): InputStream = {
