@@ -70,7 +70,7 @@ object ChangeTypes {
   }
 
   case class VisibleRepo(repoName: String, _changes: Seq[VisibleChange]
-                         , branchNames: Seq[String], _repoActivityLimitInDays: Int,
+                         , branchNames: Seq[String], _sprintLengthInDays: Int,
                          _activity: Int = 0, topComitter:Boolean = false) {
 
     val activityIndex = _activity match {
@@ -122,7 +122,7 @@ object ChangeTypes {
       } else {
         allChangesCount.toDouble / changeCountsByAuthor.size.toDouble
       }
-      val result = (medianChanges + meanChanges) / 2d / _repoActivityLimitInDays
+      val result = (medianChanges + meanChanges) / 2d / _sprintLengthInDays
       BigDecimal(result).setScale(1, BigDecimal.RoundingMode.HALF_UP).toDouble
     }
 

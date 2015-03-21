@@ -1,5 +1,6 @@
 import java.io.{File, InputStream}
-import java.nio.file.Files
+import java.nio.charset.StandardCharsets
+import java.nio.file.{Paths, Files}
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -14,13 +15,12 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
       val content: Seq[VisibleChange] = repos.flatMap(_.changes)
         .sortBy(_.commitTime).reverse
 
-      writeByName("truckMap", content.take(displayLimit))
-
       writeTruckByRepo(repoActivityLimit, content, displayLimit, sprintLengthInDays)
     }
   }
 
-  private def writeTruckByRepo(repoActivityLimit: Int, content: Seq[VisibleChange], displayLimit: Int, commitLimitDays: Int) {
+  private def writeTruckByRepo(repoActivityLimit: Int, content: Seq[VisibleChange], //
+                               displayLimit: Int, sprintLengthInDays: Int) {
     val repoByName = repos.groupBy(_.repoName)
     def branchNamesOf(key: String) = repoByName.get(key).get.head.branchNames
 
@@ -37,7 +37,7 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
           .groupBy(_.repoName)
 
         val truckByProject: Seq[VisibleRepo] = contentGrouped.toSeq
-          .map(in => VisibleRepo(in._1, in._2, branchNamesOf(in._1), commitLimitDays, scoreOf(in._1, repoActivityLimit, contentGrouped)))
+          .map(in => VisibleRepo(in._1, in._2, branchNamesOf(in._1), sprintLengthInDays, scoreOf(in._1, repoActivityLimit, contentGrouped)))
           .filter(_.changes.size > repoActivityLimit)
 
         if (truckByProject == Nil) {
@@ -58,14 +58,15 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
 
         case class Slot(repos: Seq[VisibleRepo])
 
-        case class Segmented(slots: Seq[Slot], newestCommitDate: String, latestCommitDate: String)
+        case class Segmented(slots: Seq[Slot], newestCommitDate: String, latestCommitDate: String, sprintLength:Int)
         val segments = ReportGenerator.slidingsOf(3)(markedTopComitter
           .sortBy(_.repoName).sortBy(_.allChangesCount).reverse.sortWith(_.percentageOk > _.percentageOk)
         )
 
         val segemnts = Segmented(slots = Seq(Slot(segments(0)), Slot(segments(1)), Slot(segments(2))),
           latestCommitDate = ReportGenerator.formatedDateBySecs(contentListed.map(_.commitTime).min),
-          newestCommitDate = ReportGenerator.formatedDateBySecs(filterCommitDate)
+          newestCommitDate = ReportGenerator.formatedDateBySecs(filterCommitDate),
+          sprintLength = sprintLengthInDays
         )
         writeByName("truckByProject", segemnts, "truckByProject" + dayDelta)
 
@@ -135,7 +136,7 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
   private def writeByName(reportFileName: String, content: Any, outputFileName: String = "") {
     val fileName = reportFileName + ".mu"
 
-    val text = io.Source.fromInputStream(ReportGenerator.fileFrom(fileName)).mkString
+    val text = io.Source.fromInputStream(getClass.getResourceAsStream(fileName), "utf-8").mkString
     val template = Handlebars(text)
 
     val contentMap: Map[String, Any] = Map(//

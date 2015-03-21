@@ -30,7 +30,7 @@ object DemoData {
     VisibleRepo(repoName = name + number,
       _changes = _changes.map(_.apply(name + number)),
       branchNames = Seq.tabulate(number % 3 + 1)(_ + "b"),
-      _repoActivityLimitInDays = 10,
+      _sprintLengthInDays = 14,
       _activity = 10)
   }
 
