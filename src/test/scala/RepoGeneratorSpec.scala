@@ -10,7 +10,7 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen {
 
       When("get score")
       val exception = intercept[NoSuchElementException] {
-        ReportGenerator.repoActivityScoreOf(repoName = "a", repoActivityLimit = 1, map)
+        ReportGenerator.repoActivityScoreOf(repoName = "a", map)
       }
 
       Then("check")
@@ -23,7 +23,7 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen {
 
       When("get score")
       val exception = intercept[NoSuchElementException] {
-        ReportGenerator.repoActivityScoreOf(repoName = "a", repoActivityLimit = 1, map)
+        ReportGenerator.repoActivityScoreOf(repoName = "a", map)
       }
       Then("check")
       assertResult("key not found: 0")(exception.getMessage)
@@ -36,7 +36,7 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen {
       val map = Map("a" -> Seq(change))
 
       When("get score")
-      val result = ReportGenerator.repoActivityScoreOf(repoName = "a", repoActivityLimit = 1, map)
+      val result = ReportGenerator.repoActivityScoreOf(repoName = "a", map)
 
       Then("check")
       assertResult(ActivityScore.high)(result)
@@ -51,8 +51,8 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen {
       val map = Map("a" → Seq(chA, chA, chA), "b" → Seq(chB, chB))
 
       When("get score")
-      val resultA = ReportGenerator.repoActivityScoreOf(repoName = "a", repoActivityLimit = 10, map)
-      val resultB = ReportGenerator.repoActivityScoreOf(repoName = "b", repoActivityLimit = 10, map)
+      val resultA = ReportGenerator.repoActivityScoreOf(repoName = "a", map)
+      val resultB = ReportGenerator.repoActivityScoreOf(repoName = "b", map)
 
       Then("check")
       assertResult(ActivityScore.high)(resultA)
@@ -70,10 +70,10 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen {
       val map = Map("b" → Seq.fill(3)(chB), "c" → Seq.fill(2)(chC), "d" → Seq.fill(1)(chD), "a" → Seq.fill(100)(chA))
 
       When("get score")
-      val resultA = ReportGenerator.repoActivityScoreOf(repoName = "a", repoActivityLimit = 10, map)
-      val resultB = ReportGenerator.repoActivityScoreOf(repoName = "b", repoActivityLimit = 10, map)
-      val resultC = ReportGenerator.repoActivityScoreOf(repoName = "c", repoActivityLimit = 10, map)
-      val resultD = ReportGenerator.repoActivityScoreOf(repoName = "d", repoActivityLimit = 10, map)
+      val resultA = ReportGenerator.repoActivityScoreOf(repoName = "a", map)
+      val resultB = ReportGenerator.repoActivityScoreOf(repoName = "b", map)
+      val resultC = ReportGenerator.repoActivityScoreOf(repoName = "c", map)
+      val resultD = ReportGenerator.repoActivityScoreOf(repoName = "d", map)
 
       Then("check")
       assertResult(ActivityScore.high)(resultA)
@@ -92,14 +92,35 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen {
       val map = Map("a" → Seq(chA, chA, chA), "b" → Seq(chB, chB), "c" → Seq(chC))
 
       When("get score")
-      val resultA = ReportGenerator.repoActivityScoreOf(repoName = "a", repoActivityLimit = 10, map)
-      val resultB = ReportGenerator.repoActivityScoreOf(repoName = "b", repoActivityLimit = 10, map)
-      val resultC = ReportGenerator.repoActivityScoreOf(repoName = "c", repoActivityLimit = 10, map)
+      val resultA = ReportGenerator.repoActivityScoreOf(repoName = "a", map)
+      val resultB = ReportGenerator.repoActivityScoreOf(repoName = "b", map)
+      val resultC = ReportGenerator.repoActivityScoreOf(repoName = "c", map)
 
       Then("check")
       assertResult(ActivityScore.high)(resultA)
       assertResult(ActivityScore.mid)(resultB)
       assertResult(ActivityScore.low)(resultC)
+
+    }
+
+    scenario("3 with 3,3,2") {
+      Given("changes")
+
+      val chA = ChangeTypesSpec.newVisChangeOfRepo("a")("any")
+      val chB = ChangeTypesSpec.newVisChangeOfRepo("b")("any")
+      val chC = ChangeTypesSpec.newVisChangeOfRepo("c")("any")
+
+      val map = Map("a" → Seq(chA, chA, chA), "b" → Seq(chB, chB, chB), "c" → Seq(chC))
+
+      When("get score")
+      val resultA = ReportGenerator.repoActivityScoreOf(repoName = "a", map)
+      val resultB = ReportGenerator.repoActivityScoreOf(repoName = "b", map)
+      val resultC = ReportGenerator.repoActivityScoreOf(repoName = "c", map)
+
+      Then("check")
+      assertResult(ActivityScore.high)(resultA)
+      assertResult(ActivityScore.high)(resultB)
+      assertResult(ActivityScore.mid)(resultC)
 
     }
   }

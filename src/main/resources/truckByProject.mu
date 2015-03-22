@@ -54,6 +54,12 @@
     display: block;
     padding: 0 .5em 0 .5em;
   }
+  .repo.repo-high.repo-66 {
+    border-color: rgba(42, 161, 152, 0.5);
+  }
+  .repo.repo-high.repo-80 {
+    border-color: #2aa198;
+  }
   .repo .title {
     margin-top: .6em;
     margin-bottom: .6em;
@@ -142,7 +148,8 @@
       <div class="content">
       <div class="col-md-4 colled">
       {{#repos}}
-        <div class="repo">
+        <div class="repo repo-{{{activityIndex}}} {{#percentageOkGt66}}repo-66{{/percentageOkGt66}}
+        {{#percentageOkGt80}}repo-80{{/percentageOkGt80}}">
           <div class="row title">
             <div class="col-xs-6 title-name">
               <span class="octicon octicon-repo"></span> {{{repoName}}}

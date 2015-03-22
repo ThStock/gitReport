@@ -40,14 +40,13 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
       if (contentListed != Nil) {
         val contentGrouped = contentListed.groupBy(_.repoName).filter(_._2.size > repoActivityLimit)
 
-        val truckByProject: Seq[VisibleRepo] = contentGrouped.toSeq
+        val truckByProject: Seq[VisibleRepo] = contentGrouped
+          .toSeq
           .map(in => VisibleRepo(in._1,
                                  in._2,
                                  branchNamesOf(in._1),
                                  sprintLengthInDays,
-                                 ReportGenerator
-                                   .repoActivityScoreOf(in._1, repoActivityLimit, contentGrouped)
-                                   .intValue))
+                                 ReportGenerator.repoActivityScoreOf(in._1, contentGrouped).intValue))
 
         if (truckByProject == Nil) {
           println("W: no repos will appear in report")
@@ -85,7 +84,7 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
       }
     }
 
-    Range(0, 5).foreach(writeReport)
+    writeReport(0)
 
     copyTo("octoicons/octicons.css")
     copyTo("octoicons/octicons.eot")
@@ -166,15 +165,15 @@ object ReportGenerator {
     val low = ActivityScore(0)
   }
 
-  def repoActivityScoreOf(repoName: String,
-                          repoActivityLimit: Int,
-                          contentGrouped: Map[String, Seq[VisibleChange]]): ActivityScore = {
-    val slides = slidingsOf(3)(contentGrouped.map(_._2.size).filterNot(_ == 0).toSeq.sorted.reverse)
+  def repoActivityScoreOf(repoName: String, contentGrouped: Map[String, Seq[VisibleChange]]): ActivityScore = {
+    val slides = slidingsOf(3)(contentGrouped.map(_._2.size).filterNot(_ == 0).toSet.toSeq.sorted.reverse)
     val scores = (slides(0).map(in ⇒ (in, ActivityScore.high)) ++
       slides(1).map(in ⇒ (in, ActivityScore.mid)) ++
       slides(2).map(in ⇒ (in, ActivityScore.low))).foldLeft(Map[Int, ActivityScore]())(_ + _)
 
     val changeCount: Int = contentGrouped.get(repoName).get.size
+
+
     scores(changeCount)
   }
 
