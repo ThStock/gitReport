@@ -171,18 +171,13 @@ object ReportGenerator {
   def repoActivityScoreOf(repoName: String,
                           repoActivityLimit: Int,
                           contentGrouped: Map[String, Seq[VisibleChange]]): ActivityScore = {
+    val slides = slidingsOf(3)(contentGrouped.map(_._2.size).filterNot(_ == 0).toSeq.sorted.reverse)
+    val scores = (slides(0).map(in ⇒ (in, ActivityScore.high)) ++
+      slides(1).map(in ⇒ (in, ActivityScore.mid)) ++
+      slides(2).map(in ⇒ (in, ActivityScore.low))).foldLeft(Map[Int, ActivityScore]())(_ + _)
 
-    val maxChanges = contentGrouped.map(_._2.size).filterNot(_ == 0).max
-    val thirdOfChanges = maxChanges / 3d
-    val higherThird = 2 * thirdOfChanges
-    val changeCount:Int = contentGrouped.get(repoName).get.size
-    if (changeCount <= thirdOfChanges) {
-      ActivityScore.low
-    } else if (changeCount > thirdOfChanges && changeCount <= higherThird) {
-      ActivityScore.mid
-    } else {
-      ActivityScore.high
-    }
+    val changeCount: Int = contentGrouped.get(repoName).get.size
+    scores(changeCount)
   }
 
   private def fileFrom(fileName: String): InputStream = {

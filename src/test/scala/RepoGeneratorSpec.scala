@@ -9,12 +9,12 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen {
       val map = Map[String, Seq[ChangeTypes.VisibleChange]]()
 
       When("get score")
-      val exception = intercept[UnsupportedOperationException] {
+      val exception = intercept[NoSuchElementException] {
         ReportGenerator.repoActivityScoreOf(repoName = "a", repoActivityLimit = 1, map)
       }
 
       Then("check")
-      assertResult("empty.max")(exception.getMessage)
+      assertResult("None.get")(exception.getMessage)
     }
 
     scenario("zero") {
@@ -22,11 +22,11 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen {
       val map = Map("a" -> Nil)
 
       When("get score")
-      val exception = intercept[UnsupportedOperationException] {
+      val exception = intercept[NoSuchElementException] {
         ReportGenerator.repoActivityScoreOf(repoName = "a", repoActivityLimit = 1, map)
       }
       Then("check")
-      assertResult("empty.max")(exception.getMessage)
+      assertResult("key not found: 0")(exception.getMessage)
 
     }
 
@@ -67,7 +67,7 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen {
       val chC = ChangeTypesSpec.newVisChangeOfRepo("c")("any")
       val chD = ChangeTypesSpec.newVisChangeOfRepo("d")("any")
 
-      val map = Map("a" → Seq.fill(100)(chA), "b" → Seq.fill(3)(chB), "c" → Seq.fill(2)(chC), "d" → Seq.fill(1)(chD))
+      val map = Map("b" → Seq.fill(3)(chB), "c" → Seq.fill(2)(chC), "d" → Seq.fill(1)(chD), "a" → Seq.fill(100)(chA))
 
       When("get score")
       val resultA = ReportGenerator.repoActivityScoreOf(repoName = "a", repoActivityLimit = 10, map)
@@ -77,8 +77,8 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen {
 
       Then("check")
       assertResult(ActivityScore.high)(resultA)
-      assertResult(ActivityScore.low)(resultB)
-      assertResult(ActivityScore.low)(resultC)
+      assertResult(ActivityScore.high)(resultB)
+      assertResult(ActivityScore.mid)(resultC)
       assertResult(ActivityScore.low)(resultD)
     }
 
