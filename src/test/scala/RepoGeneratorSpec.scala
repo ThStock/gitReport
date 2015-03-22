@@ -1,6 +1,108 @@
+import ReportGenerator.ActivityScore
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
 class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen {
+
+  feature("activity score") {
+    scenario("invalid params") {
+      Given("no changes")
+      val map = Map[String, Seq[ChangeTypes.VisibleChange]]()
+
+      When("get score")
+      val exception = intercept[UnsupportedOperationException] {
+        ReportGenerator.repoActivityScoreOf(repoName = "a", repoActivityLimit = 1, map)
+      }
+
+      Then("check")
+      assertResult("empty.max")(exception.getMessage)
+    }
+
+    scenario("zero") {
+      Given("no changes")
+      val map = Map("a" -> Nil)
+
+      When("get score")
+      val exception = intercept[UnsupportedOperationException] {
+        ReportGenerator.repoActivityScoreOf(repoName = "a", repoActivityLimit = 1, map)
+      }
+      Then("check")
+      assertResult("empty.max")(exception.getMessage)
+
+    }
+
+    scenario("single change with one change") {
+      Given("changes")
+      val change = ChangeTypesSpec.newVisChange("any")
+      val map = Map("a" -> Seq(change))
+
+      When("get score")
+      val result = ReportGenerator.repoActivityScoreOf(repoName = "a", repoActivityLimit = 1, map)
+
+      Then("check")
+      assertResult(ActivityScore.high)(result)
+    }
+
+    scenario("2 with 3,2") {
+      Given("changes")
+
+      val chA = ChangeTypesSpec.newVisChangeOfRepo("a")("any")
+      val chB = ChangeTypesSpec.newVisChangeOfRepo("b")("any")
+
+      val map = Map("a" → Seq(chA, chA, chA), "b" → Seq(chB, chB))
+
+      When("get score")
+      val resultA = ReportGenerator.repoActivityScoreOf(repoName = "a", repoActivityLimit = 10, map)
+      val resultB = ReportGenerator.repoActivityScoreOf(repoName = "b", repoActivityLimit = 10, map)
+
+      Then("check")
+      assertResult(ActivityScore.high)(resultA)
+      assertResult(ActivityScore.mid)(resultB)
+    }
+
+    scenario("4 with 100,3,2,1") {
+      Given("changes")
+
+      val chA = ChangeTypesSpec.newVisChangeOfRepo("a")("any")
+      val chB = ChangeTypesSpec.newVisChangeOfRepo("b")("any")
+      val chC = ChangeTypesSpec.newVisChangeOfRepo("c")("any")
+      val chD = ChangeTypesSpec.newVisChangeOfRepo("d")("any")
+
+      val map = Map("a" → Seq.fill(100)(chA), "b" → Seq.fill(3)(chB), "c" → Seq.fill(2)(chC), "d" → Seq.fill(1)(chD))
+
+      When("get score")
+      val resultA = ReportGenerator.repoActivityScoreOf(repoName = "a", repoActivityLimit = 10, map)
+      val resultB = ReportGenerator.repoActivityScoreOf(repoName = "b", repoActivityLimit = 10, map)
+      val resultC = ReportGenerator.repoActivityScoreOf(repoName = "c", repoActivityLimit = 10, map)
+      val resultD = ReportGenerator.repoActivityScoreOf(repoName = "d", repoActivityLimit = 10, map)
+
+      Then("check")
+      assertResult(ActivityScore.high)(resultA)
+      assertResult(ActivityScore.low)(resultB)
+      assertResult(ActivityScore.low)(resultC)
+      assertResult(ActivityScore.low)(resultD)
+    }
+
+    scenario("3 with 3,2,1") {
+      Given("changes")
+
+      val chA = ChangeTypesSpec.newVisChangeOfRepo("a")("any")
+      val chB = ChangeTypesSpec.newVisChangeOfRepo("b")("any")
+      val chC = ChangeTypesSpec.newVisChangeOfRepo("c")("any")
+
+      val map = Map("a" → Seq(chA, chA, chA), "b" → Seq(chB, chB), "c" → Seq(chC))
+
+      When("get score")
+      val resultA = ReportGenerator.repoActivityScoreOf(repoName = "a", repoActivityLimit = 10, map)
+      val resultB = ReportGenerator.repoActivityScoreOf(repoName = "b", repoActivityLimit = 10, map)
+      val resultC = ReportGenerator.repoActivityScoreOf(repoName = "c", repoActivityLimit = 10, map)
+
+      Then("check")
+      assertResult(ActivityScore.high)(resultA)
+      assertResult(ActivityScore.mid)(resultB)
+      assertResult(ActivityScore.low)(resultC)
+
+    }
+  }
 
   feature("slidings") {
     scenario("3 elments in 3") {

@@ -21,7 +21,7 @@ object Reporter extends App {
 
   val changes: Seq[VisibleRepo] = if (filenameToSearchForRepos == "--demo") {
     println("... using demodata / --demo 1")
-    DemoData.get()
+    DemoData.get(sprintLengthInDays)
   } else {
     val repos = new File(filenameToSearchForRepos)
     print("... scanning for git dirs in " + repos.getAbsolutePath)

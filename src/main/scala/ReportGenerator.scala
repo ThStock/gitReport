@@ -1,6 +1,5 @@
 import java.io.{File, InputStream}
-import java.nio.charset.StandardCharsets
-import java.nio.file.{Paths, Files}
+import java.nio.file.Files
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -12,32 +11,44 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
 
   def write(sprintLengthInDays: Int, displayLimit: Int, repoActivityLimit: Int) {
     if (repos != Nil) {
-      val content: Seq[VisibleChange] = repos.flatMap(_.changes)
-        .sortBy(_.commitTime).reverse
+      val content: Seq[VisibleChange] = repos.flatMap(_.changes).sortBy(_.commitTime).reverse
 
-      writeTruckByRepo(repoActivityLimit, content, displayLimit, sprintLengthInDays)
+      writeTruckByRepo(repoActivityLimit,
+                       content,
+                       displayLimit,
+                       sprintLengthInDays,
+                       writeByNameToDisk,
+                       copyToOutputFolder)
     }
   }
 
-  private def writeTruckByRepo(repoActivityLimit: Int, content: Seq[VisibleChange], //
-                               displayLimit: Int, sprintLengthInDays: Int) {
+  def writeTruckByRepo(repoActivityLimit: Int,
+                       content: Seq[VisibleChange],
+                       displayLimit: Int,
+                       sprintLengthInDays: Int,
+                       writeTo: (String, Any, String) ⇒ Unit,
+                       copyTo: (String) ⇒ Unit) {
     val repoByName = repos.groupBy(_.repoName)
     def branchNamesOf(key: String) = repoByName.get(key).get.head.branchNames
 
     val latestCommitDate = content.map(_.commitTime).max.toLong
 
-    def write(dayDelta: Int) {
+    def writeReport(dayDelta: Int) {
 
       val filterCommitDate = latestCommitDate - dayDelta * 86400L
-      val contentListed = content
-        .filter(_.commitTime <= filterCommitDate)
-        .take(displayLimit)
+      val contentListed = content.filter(_.commitTime <= filterCommitDate).take(displayLimit)
       if (contentListed != Nil) {
-        val contentGrouped = contentListed
-          .groupBy(_.repoName)
+        val contentGrouped = contentListed.groupBy(_.repoName)
 
-        val truckByProject: Seq[VisibleRepo] = contentGrouped.toSeq
-          .map(in => VisibleRepo(in._1, in._2, branchNamesOf(in._1), sprintLengthInDays, scoreOf(in._1, repoActivityLimit, contentGrouped)))
+        val truckByProject: Seq[VisibleRepo] = contentGrouped
+          .toSeq
+          .map(in => VisibleRepo(in._1,
+                                 in._2,
+                                 branchNamesOf(in._1),
+                                 sprintLengthInDays,
+                                 ReportGenerator
+                                   .repoActivityScoreOf(in._1, repoActivityLimit, contentGrouped)
+                                   .intValue))
           .filter(_.changes.size > repoActivityLimit)
 
         if (truckByProject == Nil) {
@@ -49,8 +60,7 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
         } else {
           0
         }
-        val markedTopComitter = truckByProject
-          .map(r => if (r.mainComitters == topCommitts && r._activity > 1) {
+        val markedTopComitter = truckByProject.map(r => if (r.mainComitters == topCommitts && r._activity > 1) {
           r.copy(topComitter = true)
         } else {
           r
@@ -58,60 +68,32 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
 
         case class Slot(repos: Seq[VisibleRepo])
 
-        case class Segmented(slots: Seq[Slot], newestCommitDate: String, latestCommitDate: String, sprintLength:Int)
-        val segments = ReportGenerator.slidingsOf(3)(markedTopComitter
-          .sortBy(_.repoName).sortBy(_.allChangesCount).reverse.sortWith(_.percentageOk > _.percentageOk)
-        )
+        case class Segmented(slots: Seq[Slot], newestCommitDate: String, latestCommitDate: String, sprintLength: Int)
+        val segments = ReportGenerator.slidingsOf(3) {
+          markedTopComitter
+            .sortBy(_.repoName)
+            .sortBy(_.allChangesCount)
+            .reverse
+            .sortWith(_.percentageOk > _.percentageOk)
+        }
 
         val segemnts = Segmented(slots = Seq(Slot(segments(0)), Slot(segments(1)), Slot(segments(2))),
-          latestCommitDate = ReportGenerator.formatedDateBySecs(contentListed.map(_.commitTime).min),
-          newestCommitDate = ReportGenerator.formatedDateBySecs(filterCommitDate),
-          sprintLength = sprintLengthInDays
-        )
-        writeByName("truckByProject", segemnts, "truckByProject" + dayDelta)
+                                 latestCommitDate = ReportGenerator
+                                   .formatedDateBySecs(contentListed.map(_.commitTime).min),
+                                 newestCommitDate = ReportGenerator.formatedDateBySecs(filterCommitDate),
+                                 sprintLength = sprintLengthInDays)
+        writeTo("truckByProject", segemnts, "truckByProject" + dayDelta)
 
       }
     }
 
-    Range(0, 5).foreach(write)
+    Range(0, 5).foreach(writeReport)
 
-    copyToOutput("octoicons/octicons.css")
-    copyToOutput("octoicons/octicons.eot")
-    copyToOutput("octoicons/octicons.svg")
-    copyToOutput("octoicons/octicons.woff")
-    copyToOutput("bootstrap-3.3.2-dist/css/bootstrap.min.css")
-  }
-
-  case class RepoGroup(amount: Int)
-
-  case class RepoStatus(repoNamesToChangeCount: Map[String, Int], repoNameToSize: Seq[Int]) {
-    val min = RepoGroup(repoNameToSize(0))
-    val mid = RepoGroup(repoNameToSize(1))
-    val max = RepoGroup(repoNameToSize(2))
-
-    def changeCountOf(repoName: String) = repoNamesToChangeCount.get(repoName).get
-  }
-
-  def scoreOf(repoName: String, repoActivityLimit: Int, contentGrouped: Map[String, Seq[VisibleChange]]): Int = {
-    val repoStat = repoStatus(repoActivityLimit, contentGrouped)
-    repoStat.changeCountOf(repoName) match {
-      case i: Int if i <= repoStat.min.amount => 0
-      case i: Int if i < repoStat.mid.amount => 1
-      case i: Int if i >= repoStat.mid.amount => 2
-      case _ => 1
-    }
-  }
-
-  def repoStatus(repoActivityLimit: Int, repoNameToChanges: Map[String, Seq[VisibleChange]]): RepoStatus = {
-    val repoNameToChangeCount = repoNameToChanges.map(in => (in._1, in._2.size))
-    val repoActivities = repoNameToChangeCount.map(_._2).filter(_ > repoActivityLimit).toSeq.sorted
-    val repoSlidings: Seq[Seq[Int]] = ReportGenerator.slidingsOf(3)(repoActivities)
-    def maxIfPresent(in: Seq[Int]): Int = if (in == Nil) {
-      0
-    } else {
-      in.max
-    }
-    RepoStatus(repoNameToChangeCount, repoNameToSize = repoSlidings.map(maxIfPresent))
+    copyTo("octoicons/octicons.css")
+    copyTo("octoicons/octicons.eot")
+    copyTo("octoicons/octicons.svg")
+    copyTo("octoicons/octicons.woff")
+    copyTo("bootstrap-3.3.2-dist/css/bootstrap.min.css")
   }
 
   private lazy val outDir: File = {
@@ -122,7 +104,7 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
     out
   }
 
-  private def copyToOutput(path: String) {
+  private def copyToOutputFolder(path: String) {
     val outputFilename = outDir.toPath.resolve(path)
     val parant = outputFilename.getParent
     if (!Files.isDirectory(parant)) {
@@ -133,16 +115,12 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
     }
   }
 
-  private def writeByName(reportFileName: String, content: Any, outputFileName: String = "") {
-    val fileName = reportFileName + ".mu"
-
+  private def writeByNameToDisk(reportFileName: String, content: Any, outputFileName: String = "") {
+    val fileName = reportFileName + ".mu" // TODO hbs
     val text = io.Source.fromInputStream(getClass.getResourceAsStream(fileName), "utf-8").mkString
     val template = Handlebars(text)
 
-    val contentMap: Map[String, Any] = Map(//
-      "content" -> content,
-      "reportDate" -> ReportGenerator.formatedDate(new Date())
-    )
+    val contentMap: Map[String, Any] = Map("content" → content, "reportDate" → ReportGenerator.formatedDate(new Date()))
     val outFileNameWithSuffix = if (outputFileName.isEmpty) {
       reportFileName
     } else {
@@ -180,6 +158,33 @@ object ReportGenerator {
     }
   }
 
+  case class ActivityScore(value: Int) {
+    def intValue = value
+  }
+
+  object ActivityScore {
+    val high = ActivityScore(2)
+    val mid = ActivityScore(1)
+    val low = ActivityScore(0)
+  }
+
+  def repoActivityScoreOf(repoName: String,
+                          repoActivityLimit: Int,
+                          contentGrouped: Map[String, Seq[VisibleChange]]): ActivityScore = {
+
+    val maxChanges = contentGrouped.map(_._2.size).filterNot(_ == 0).max
+    val thirdOfChanges = maxChanges / 3d
+    val higherThird = 2 * thirdOfChanges
+    val changeCount:Int = contentGrouped.get(repoName).get.size
+    if (changeCount <= thirdOfChanges) {
+      ActivityScore.low
+    } else if (changeCount > thirdOfChanges && changeCount <= higherThird) {
+      ActivityScore.mid
+    } else {
+      ActivityScore.high
+    }
+  }
+
   private def fileFrom(fileName: String): InputStream = {
     getClass.getResourceAsStream(fileName)
   }
@@ -194,5 +199,14 @@ object ReportGenerator {
 
   private def formatedDate(date: Date): String = {
     new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss").format(date)
+  }
+
+  def median(in: Seq[Int]): Double = {
+    if (in == Nil) {
+      0
+    } else {
+      val (lower, upper) = in.sorted.splitAt(in.size / 2)
+      if (in.size % 2 == 0) (lower.last + upper.head) / 2d else upper.head
+    }
   }
 }

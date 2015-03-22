@@ -1,10 +1,10 @@
-import ChangeTypes.Contributor.Activity
+import ChangeTypes.Contributor.ContributorActivity
 import ChangeTypes.{ContributorType, Contributor, VisibleChange, VisibleRepo}
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
 class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
 
-  def typCopy(c: Contributor, _activity: Activity) = c.copy(activity = _activity,
+  def typCopy(c: Contributor, _activity: ContributorActivity) = c.copy(activity = _activity,
     _typ = ContributorType("player"))
 
   def change(c: Contributor, others: Seq[Contributor] = Nil) = //
@@ -35,7 +35,7 @@ class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
     val result: Seq[Contributor] = VisibleRepo.toContibutors(changes)
 
     Then("check")
-    assertResult(Seq(typCopy(c0q, Activity.MID)))(result)
+    assertResult(Seq(typCopy(c0q, ContributorActivity.MID)))(result)
   }
 
   scenario("1 change with 2 players") {
@@ -47,7 +47,7 @@ class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
     val result: Seq[Contributor] = VisibleRepo.toContibutors(changes)
 
     Then("check")
-    assertResult(Seq(typCopy(c1a, Activity.HIGH), typCopy(c0q, Activity.HIGHEST)))(result)
+    assertResult(Seq(typCopy(c1a, ContributorActivity.HIGH), typCopy(c0q, ContributorActivity.HIGHEST)))(result)
   }
 
   scenario("2 changes 1 player") {
@@ -59,7 +59,7 @@ class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
     val result: Seq[Contributor] = VisibleRepo.toContibutors(changes)
 
     Then("check")
-    assertResult(Seq(typCopy(c0q, Activity.MID)))(result)
+    assertResult(Seq(typCopy(c0q, ContributorActivity.MID)))(result)
   }
 
   scenario("2 changes 2 player with 0, 1 interaction") {
@@ -71,7 +71,7 @@ class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
     val result: Seq[Contributor] = VisibleRepo.toContibutors(changes)
 
     Then("check")
-    assertResult(Seq(typCopy(c1a, Activity.LOWEST), typCopy(c0q, Activity.LOWEST)))(result)
+    assertResult(Seq(typCopy(c1a, ContributorActivity.LOWEST), typCopy(c0q, ContributorActivity.LOWEST)))(result)
   }
 
   scenario("2 changes 2 player with 0<-1, 1 interaction") {
@@ -83,7 +83,7 @@ class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
     val result: Seq[Contributor] = VisibleRepo.toContibutors(changes)
 
     Then("check")
-    assertResult(Seq(typCopy(c1a, Activity.LOWEST), typCopy(c0q, Activity.HIGHEST)))(result)
+    assertResult(Seq(typCopy(c1a, ContributorActivity.LOWEST), typCopy(c0q, ContributorActivity.HIGHEST)))(result)
   }
 
   scenario("2 changes 2 player with 0<-1, 1<-0 interaction") {
@@ -95,7 +95,7 @@ class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
     val result: Seq[Contributor] = VisibleRepo.toContibutors(changes)
 
     Then("check")
-    assertResult(Seq(typCopy(c1a, Activity.HIGHEST), typCopy(c0q, Activity.HIGHEST)))(result)
+    assertResult(Seq(typCopy(c1a, ContributorActivity.HIGHEST), typCopy(c0q, ContributorActivity.HIGHEST)))(result)
   }
 
   scenario("3 changes 3 player with 0<-1, 1, 2 interaction") {
@@ -106,7 +106,7 @@ class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
     val result: Seq[Contributor] = VisibleRepo.toContibutors(changes)
 
     Then("check")
-    assertResult(Seq(typCopy(c1a, Activity.LOWEST), typCopy(c2c, Activity.LOWEST), typCopy(c0q, Activity.HIGH)))(result)
+    assertResult(Seq(typCopy(c1a, ContributorActivity.LOWEST), typCopy(c2c, ContributorActivity.LOWEST), typCopy(c0q, ContributorActivity.HIGH)))(result)
   }
 
   scenario("3 changes 3 player with 0<-1, 1, 2<-1 interaction") {
@@ -117,7 +117,7 @@ class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
     val result: Seq[Contributor] = VisibleRepo.toContibutors(changes)
 
     Then("check")
-    assertResult(Seq(typCopy(c1a, Activity.LOWEST), typCopy(c2c, Activity.HIGH), typCopy(c0q, Activity.HIGH)))(result)
+    assertResult(Seq(typCopy(c1a, ContributorActivity.LOWEST), typCopy(c2c, ContributorActivity.HIGH), typCopy(c0q, ContributorActivity.HIGH)))(result)
   }
 
   scenario("3 changes 2 player with 0<-1, 1, 1<-0 interaction") {
@@ -128,7 +128,7 @@ class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
     val result: Seq[Contributor] = VisibleRepo.toContibutors(changes)
 
     Then("check")
-    assertResult(Seq(typCopy(c1a, Activity.LOWEST), typCopy(c0q, Activity.HIGHEST)))(result)
+    assertResult(Seq(typCopy(c1a, ContributorActivity.LOWEST), typCopy(c0q, ContributorActivity.HIGHEST)))(result)
   }
 
   scenario("3 changes 3 player with 0<-1, 1<-2, 1<-0 interaction") {
@@ -139,7 +139,7 @@ class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
     val result: Seq[Contributor] = VisibleRepo.toContibutors(changes)
 
     Then("check")
-    assertResult(Seq(typCopy(c1a, Activity.HIGHEST),typCopy(c2c, Activity.HIGH), typCopy(c0q, Activity.HIGH)))(result)
+    assertResult(Seq(typCopy(c1a, ContributorActivity.HIGHEST),typCopy(c2c, ContributorActivity.HIGH), typCopy(c0q, ContributorActivity.HIGH)))(result)
   }
 
   scenario("2 changes 2 player with 0<-2, 1<-2 interaction") {
@@ -150,7 +150,7 @@ class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
     val result: Seq[Contributor] = VisibleRepo.toContibutors(changes)
 
     Then("check")
-    assertResult(Seq(typCopy(c1a, Activity.HIGH),typCopy(c2c, Activity.HIGH), typCopy(c0q, Activity.HIGH)))(result)
+    assertResult(Seq(typCopy(c1a, ContributorActivity.HIGH),typCopy(c2c, ContributorActivity.HIGH), typCopy(c0q, ContributorActivity.HIGH)))(result)
   }
 
   scenario("2 changes 3 player with 0<-(2,1), 1<-(2,0) interaction") {
@@ -161,7 +161,7 @@ class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
     val result: Seq[Contributor] = VisibleRepo.toContibutors(changes)
 
     Then("check")
-    assertResult(Seq(typCopy(c1a, Activity.HIGHEST),typCopy(c2c, Activity.HIGH), typCopy(c0q, Activity.HIGHEST)))(result)
+    assertResult(Seq(typCopy(c1a, ContributorActivity.HIGHEST),typCopy(c2c, ContributorActivity.HIGH), typCopy(c0q, ContributorActivity.HIGHEST)))(result)
   }
 
   scenario("3 changes 2 player with 0<-1, 1<-1, 1<-0 interaction") {
@@ -172,7 +172,7 @@ class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
     val result: Seq[Contributor] = VisibleRepo.toContibutors(changes)
 
     Then("check")
-    assertResult(Seq(typCopy(c1a, Activity.MID), typCopy(c0q, Activity.HIGHEST)))(result)
+    assertResult(Seq(typCopy(c1a, ContributorActivity.MID), typCopy(c0q, ContributorActivity.HIGHEST)))(result)
   }
 
   scenario("3 changes 2 player with 0, 1, 1 interaction") {
@@ -183,7 +183,7 @@ class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
     val result: Seq[Contributor] = VisibleRepo.toContibutors(changes)
 
     Then("check")
-    assertResult(Seq(typCopy(c1a, Activity.LOWEST), typCopy(c0q, Activity.LOWEST)))(result)
+    assertResult(Seq(typCopy(c1a, ContributorActivity.LOWEST), typCopy(c0q, ContributorActivity.LOWEST)))(result)
   }
 
   scenario("3 changes 2 player with 0<-0, 1<-1, 1<-1 interaction") {
@@ -194,7 +194,7 @@ class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
     val result: Seq[Contributor] = VisibleRepo.toContibutors(changes)
 
     Then("check")
-    assertResult(Seq(typCopy(c1a, Activity.LOWEST), typCopy(c0q, Activity.LOWEST)))(result)
+    assertResult(Seq(typCopy(c1a, ContributorActivity.LOWEST), typCopy(c0q, ContributorActivity.LOWEST)))(result)
   }
 
   scenario("5 changes 2 player with 3*(0<-1), 1<-1, 1<-0 interaction") {
@@ -205,6 +205,6 @@ class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
     val result: Seq[Contributor] = VisibleRepo.toContibutors(changes)
 
     Then("check")
-    assertResult(Seq(typCopy(c1a, Activity.MID), typCopy(c0q, Activity.HIGHEST)))(result)
+    assertResult(Seq(typCopy(c1a, ContributorActivity.MID), typCopy(c0q, ContributorActivity.HIGHEST)))(result)
   }
 }

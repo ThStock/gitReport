@@ -1,4 +1,5 @@
 import ChangeTypes.{Contributor, VisibleChange, VisibleRepo}
+import ChangeTypesSpec._
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
 class ChangeTypesSpec extends FeatureSpec with GivenWhenThen {
@@ -66,7 +67,22 @@ class ChangeTypesSpec extends FeatureSpec with GivenWhenThen {
       assert(2 == repo.mainComitters)
     }
 
-    def newVisChange(authorEmail: String) = VisibleChange(Contributor(authorEmail + "@example.org", Contributor.AUTHOR), Nil, 0, "r1")
+  }
+
+}
+
+object ChangeTypesSpec {
+
+  private def newChange(repoName: String)(authorEmail: String) = {
+    VisibleChange(author = Contributor(authorEmail + "@example.org", Contributor.AUTHOR), Nil, 0, "r1")
+  }
+
+  def newVisChangeOfRepo(repoName: String): (String ⇒ VisibleChange) = {
+    newChange(repoName)
+  }
+
+  def newVisChange(authorEmail: String) = {
+    newVisChangeOfRepo("r1")(authorEmail)
   }
 
 }

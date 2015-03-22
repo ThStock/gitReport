@@ -1,9 +1,8 @@
-import ChangeTypes.Contributor.Activity
+import ChangeTypes.Contributor.ContributorActivity
 
 object ChangeTypes {
 
-  case class VisibleChange(author: Contributor, contributors: Seq[Contributor],
-                           commitTime: Int, repoName: String) {
+  case class VisibleChange(author: Contributor, contributors: Seq[Contributor], commitTime: Int, repoName: String) {
 
     val members = contributors :+ author
 
@@ -44,8 +43,10 @@ object ChangeTypes {
     val isAuthor = name == "author"
   }
 
-  case class Contributor(email: String, _typ: ContributorType,
-                         activity: Contributor.Activity = Activity.LOWEST, noGerrit: Boolean = false) {
+  case class Contributor(email: String,
+                         _typ: ContributorType,
+                         activity: Contributor.ContributorActivity = ContributorActivity.LOWEST,
+                         noGerrit: Boolean = false) {
     val hash = RepoAnalyzer.md5(email)
     val isAuthor = _typ.isAuthor
     val activityValue = activity.key
@@ -57,21 +58,24 @@ object ChangeTypes {
     val AUTHOR: ContributorType = ContributorType("author")
     val REVIWER = ContributorType("Code-Review")
 
-    case class Activity(key: String)
+    case class ContributorActivity(key: String)
 
-    object Activity {
-      val LOWEST = Activity("lowest")
-      val LOW = Activity("low")
-      val MID = Activity("mid")
-      val HIGH = Activity("high")
-      val HIGHEST = Activity("highest")
+    object ContributorActivity {
+      val LOWEST = ContributorActivity("lowest")
+      val LOW = ContributorActivity("low")
+      val MID = ContributorActivity("mid")
+      val HIGH = ContributorActivity("high")
+      val HIGHEST = ContributorActivity("highest")
     }
 
   }
 
-  case class VisibleRepo(repoName: String, _changes: Seq[VisibleChange]
-                         , branchNames: Seq[String], _sprintLengthInDays: Int,
-                         _activity: Int = 0, topComitter:Boolean = false) {
+  case class VisibleRepo(repoName: String,
+                         _changes: Seq[VisibleChange],
+                         branchNames: Seq[String],
+                         _sprintLengthInDays: Int,
+                         _activity: Int = 0,
+                         topComitter: Boolean = false) {
 
     val activityIndex = _activity match {
       case i if i > 1 => "high"
@@ -104,19 +108,10 @@ object ChangeTypes {
 
     val members: Seq[Contributor] = VisibleRepo.toContibutors(_changes).map(_.copy(noGerrit = this.noGerrit))
 
-    private def median(in: Seq[Int]): Double = {
-      if (in == Nil) {
-        0
-      } else {
-        val (lower, upper) = in.sorted.splitAt(in.size / 2)
-        if (in.size % 2 == 0) (lower.last + upper.head) / 2d else upper.head
-      }
-    }
-
     private val changeCountsByAuthor = _changes.groupBy(_.author).toSeq.map(_._2.size)
 
     val changesPerDay: Double = {
-      val medianChanges = median(changeCountsByAuthor)
+      val medianChanges = ReportGenerator.median(changeCountsByAuthor)
       val meanChanges: Double = if (_changes == Nil) {
         0d
       } else {
@@ -152,9 +147,8 @@ object ChangeTypes {
         if (!allChangesByAuthor.contains(contributor)) {
           // TODO
           // is reviewer only
-          Activity.HIGH
+          ContributorActivity.HIGH
         } else {
-
           val self = EmailAndTyp(contributor.email, "")
           val changesOf = allChangesByAuthor(contributor)
           val membersSimpyfied = changesOf.flatMap(_.members).map(EmailAndTyp.by)
@@ -163,31 +157,31 @@ object ChangeTypes {
           val contributorsSimpyfied = changesOf.flatMap(_.contributors).map(EmailAndTyp.by)
           val contributions = allChangesByContributor.get(EmailAndTyp.by(contributor))
 
-          val selfReviewsVsChanges = selfReviews.size.toDouble / (changesOfContibutors.size + contributions.getOrElse(Nil).size - selfReviews.size)
+          val selfReviewsVsChanges = selfReviews.size.toDouble / (changesOfContibutors.size + contributions
+            .getOrElse(Nil)
+            .size - selfReviews.size)
           val isNoDirectCommit = contributorsSimpyfied.size >= changesOf.size
           val repoHasMoreThenOneMember = membersSimpyfied.toSet.size > 1
           val repoHasMoreThenOneContributors = contributorsSimpyfied.toSet.size > 1
 
           if (allMembersEmails.size > 1 && membersSimpyfied.toSet.size == allMembersEmails.size &&
             selfReviewsVsChanges < 0.1d && isNoDirectCommit) {
-            Activity.HIGHEST
+            ContributorActivity.HIGHEST
           } else if (allMembersEmails.size > 1 && selfReviewsVsChanges < 0.2d && isNoDirectCommit) {
-            Activity.HIGH
+            ContributorActivity.HIGH
           } else if (allMembersEmails.size == 1) {
-            Activity.MID
+            ContributorActivity.MID
           } else if (repoHasMoreThenOneMember && selfReviewsVsChanges < 0.4d && isNoDirectCommit) {
-            Activity.MID
+            ContributorActivity.MID
           } else if (repoHasMoreThenOneContributors && selfReviewsVsChanges < 0.8d) {
-            Activity.LOW
+            ContributorActivity.LOW
           } else {
-            Activity.LOWEST
+            ContributorActivity.LOWEST
           }
         }
       }
 
-      allMembers
-        .map(in => in.copy(_typ = ContributorType("player")))
-        .toSet[Contributor]
+      allMembers.map(in => in.copy(_typ = ContributorType("player"))).toSet[Contributor]
         .map(in => in.copy(activity = selectActivity(in)))
         .toSeq
         .sortWith(_.email < _.email)
