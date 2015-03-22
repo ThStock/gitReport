@@ -26,9 +26,11 @@ object DemoData {
       Seq(chD(a), chB(a), chE(a), chA(a), chB(a), chB(r), chB(r), chC(r), chB(r), chD(r), chE(r)),
       Seq(chD(a), chB(a), chE(a), chA(a), chB(a), chB(a), chB(a), chC(a)),
       Seq(chD(n), chB(n), chE(n), chA(n), chB(n), chB(n), chB(n), chB(n), chD(n), chE(n)),
-      Seq(chD(a), chB(a), chE(a), chA(a), chB(a), chB(a), chB(a), chC(a), chB(a), chD(a), chE(r))
+      Seq(chD(a), chB(a), chE(a), chA(a), chB(a), chB(a), chB(a), chC(a), chB(a), chD(a), chE(r)),
+      Seq(chD(a)),Seq(chD(a)),Seq(chD(a)),Seq(chD(a)),Seq(chD(a))
     )
-    Seq.tabulate(7)(i => vRepo("demo-repo-", i + 1, changes(i), sprintLengthInDays))
+
+    Seq.tabulate(13)(i => vRepo("demo-repo-", i + 1, changes(i), sprintLengthInDays))
   }
 
   def bySprintLenght(sprintLenghtInDays: Int): (ChangeTypes.VisibleChange) => Boolean = {

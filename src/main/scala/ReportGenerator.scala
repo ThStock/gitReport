@@ -38,10 +38,9 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
       val filterCommitDate = latestCommitDate - dayDelta * 86400L
       val contentListed = content.filter(_.commitTime <= filterCommitDate).take(displayLimit)
       if (contentListed != Nil) {
-        val contentGrouped = contentListed.groupBy(_.repoName)
+        val contentGrouped = contentListed.groupBy(_.repoName).filter(_._2.size > repoActivityLimit)
 
-        val truckByProject: Seq[VisibleRepo] = contentGrouped
-          .toSeq
+        val truckByProject: Seq[VisibleRepo] = contentGrouped.toSeq
           .map(in => VisibleRepo(in._1,
                                  in._2,
                                  branchNamesOf(in._1),
@@ -49,7 +48,6 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
                                  ReportGenerator
                                    .repoActivityScoreOf(in._1, repoActivityLimit, contentGrouped)
                                    .intValue))
-          .filter(_.changes.size > repoActivityLimit)
 
         if (truckByProject == Nil) {
           println("W: no repos will appear in report")
