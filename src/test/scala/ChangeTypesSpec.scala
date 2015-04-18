@@ -29,7 +29,6 @@ class ChangeTypesSpec extends FeatureSpec with GivenWhenThen {
       assert(1 == repo.mainComitters)
     }
 
-
     scenario("changesPerDay - 2") {
       Given("changes")
       val changes = Seq(newVisChange("e"), newVisChange("e"))
@@ -74,7 +73,7 @@ class ChangeTypesSpec extends FeatureSpec with GivenWhenThen {
 object ChangeTypesSpec {
 
   private def newChange(repoName: String)(authorEmail: String) = {
-    VisibleChange(author = Contributor(authorEmail + "@example.org", Contributor.AUTHOR), Nil, 0, "r1")
+    VisibleChange(author = Contributor(authorEmail + "@example.org", Contributor.AUTHOR), Nil, 0, "r1", true)
   }
 
   def newVisChangeOfRepo(repoName: String): (String ⇒ VisibleChange) = {

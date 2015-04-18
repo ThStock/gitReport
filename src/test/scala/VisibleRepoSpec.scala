@@ -8,7 +8,7 @@ class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
     _typ = ContributorType("player"))
 
   def change(c: Contributor, others: Seq[Contributor] = Nil) = //
-    VisibleChange(c, others.map(_.copy(_typ = ContributorType("check"))), 0, "any")
+    VisibleChange(c, others.map(_.copy(_typ = ContributorType("check"))), 0, "any", true)
 
   val c0q = Contributor("q@example.org", ContributorType("any"))
   val c1a = Contributor("a@example.org", ContributorType("any"))

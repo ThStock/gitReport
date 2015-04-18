@@ -48,7 +48,7 @@ object DemoData {
     VisibleRepo(repoName = name + number,
       _changes = _changes.map(_.apply(name + number)).filter(bySprintLenght(sprintLengthInDays)),
       branchNames = Seq.tabulate(number % 3 + 1)(_ + "b"),
-      _sprintLengthInDays = 14)
+      _sprintLengthInDays = sprintLengthInDays)
   }
 
   private def vChange(emailPrefix: String)(changeType: Option[ChangeType])(repoName: String) = {
@@ -65,7 +65,7 @@ object DemoData {
     }
 
 
-    VisibleChange(c1, reviewer, now, repoName)
+    VisibleChange(c1, reviewer, now, repoName, true)
   }
 
   val counter = new AtomicInteger(1)

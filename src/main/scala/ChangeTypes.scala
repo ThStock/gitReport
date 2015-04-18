@@ -2,7 +2,11 @@ import ChangeTypes.Contributor.ContributorActivity
 
 object ChangeTypes {
 
-  case class VisibleChange(author: Contributor, contributors: Seq[Contributor], commitTime: Int, repoName: String) {
+  case class VisibleChange(author: Contributor,
+                           contributors: Seq[Contributor],
+                           commitTime: Int,
+                           repoName: String,
+                           highlightPersonalExchange: Boolean) {
 
     val members = contributors :+ author
 
@@ -111,20 +115,28 @@ object ChangeTypes {
     private val changeCountsByAuthor = _changes.groupBy(_.author).toSeq.map(_._2.size)
 
     val changesPerDay: Double = {
-      val medianChanges = ReportGenerator.median(changeCountsByAuthor)
-      val meanChanges: Double = if (_changes == Nil) {
-        0d
+      if (changes.exists(_.highlightPersonalExchange)) {
+        val medianChanges = ReportGenerator.median(changeCountsByAuthor)
+        val meanChanges: Double = if (_changes == Nil) {
+          0d
+        } else {
+          allChangesCount.toDouble / changeCountsByAuthor.size.toDouble
+        }
+        val result = (medianChanges + meanChanges) / 2d / _sprintLengthInDays
+        BigDecimal(result).setScale(1, BigDecimal.RoundingMode.HALF_UP).toDouble
       } else {
-        allChangesCount.toDouble / changeCountsByAuthor.size.toDouble
+        0d
       }
-      val result = (medianChanges + meanChanges) / 2d / _sprintLengthInDays
-      BigDecimal(result).setScale(1, BigDecimal.RoundingMode.HALF_UP).toDouble
     }
 
     val mainComitters: Int = {
-      val devs = changeCountsByAuthor.map(score => Math.pow(score - changesPerDay, 2))
-      val stddev = Math.sqrt(devs.sum / devs.size)
-      changeCountsByAuthor.count(_ >= stddev.toInt)
+      if (changes.exists(_.highlightPersonalExchange)) {
+        val devs = changeCountsByAuthor.map(score => Math.pow(score - changesPerDay, 2))
+        val stddev = Math.sqrt(devs.sum / devs.size)
+        changeCountsByAuthor.count(_ >= stddev.toInt)
+      } else {
+        0
+      }
     }
 
   }
