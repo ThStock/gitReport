@@ -91,6 +91,7 @@ class ReportGenerator(repos: Seq[VisibleRepo]) {
     copyTo("octoicons/octicons.svg")
     copyTo("octoicons/octicons.woff")
     copyTo("bootstrap-3.3.2-dist/css/bootstrap.min.css")
+    copyTo("git-report-xs.png")
   }
 
   private lazy val outDir: File = {
