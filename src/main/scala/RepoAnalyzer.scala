@@ -14,6 +14,7 @@ import org.eclipse.jgit.revwalk.filter.{AndRevFilter, CommitTimeRevFilter, RevFi
 import org.eclipse.jgit.storage.file._
 
 import scala.collection.JavaConversions._
+import scala.collection.parallel.ParSeq
 
 class RepoAnalyzer(repo: File, commitLimitDays: Long) {
 
@@ -59,12 +60,12 @@ class RepoAnalyzer(repo: File, commitLimitDays: Long) {
     }
 
     Some(Change(authIden.getEmailAddress,
-                authIden.getName,
-                commit.getFullMessage,
-                commit.getId.abbreviate(7).name,
-                commit.getCommitTime,
-                footerElements,
-                config.highlightPersonalExchange))
+                 authIden.getName,
+                 commit.getFullMessage,
+                 commit.getId.abbreviate(7).name,
+                 commit.getCommitTime,
+                 footerElements,
+                 config.highlightPersonalExchange))
   }
 
   def changes(): Seq[Change] = {
@@ -121,7 +122,7 @@ object RepoAnalyzer {
 
       val result: Seq[VisibleChange] = allChanges.map(toVisChange(analy.toName(), authorsToEmails))
       new VisibleRepo(analy.name(), result, analy.branchNames(), commitLimitDays)
-                     }.seq
+    }.seq
 
   }
 
@@ -146,14 +147,18 @@ object RepoAnalyzer {
       val signersWithoutFirst = signers.map(_.copy(_typ = Contributor.AUTHOR)).filterNot(_ == signerAuthor)
 
       VisibleChange(signerAuthor,
-                    Seq(author.copy(_typ = Contributor.REVIWER, email = author.email.toLowerCase)) ++ reviewers ++
-                      signersWithoutFirst,
-                    change.commitTime,
-                    repoName,
+                     Seq(author.copy(_typ = Contributor.REVIWER, email = author.email.toLowerCase)) ++ reviewers ++
+                       signersWithoutFirst,
+                     change.commitTime,
+                     repoName,
                      change.highlightPersonalExchange)
 
     } else {
-      VisibleChange(author.copy(email = author.email.toLowerCase), reviewers ++ signers, change.commitTime, repoName,change.highlightPersonalExchange)
+      VisibleChange(author.copy(email = author.email.toLowerCase),
+                     reviewers ++ signers,
+                     change.commitTime,
+                     repoName,
+                     change.highlightPersonalExchange)
     }
 
     if (change.highlightPersonalExchange) {
@@ -165,9 +170,8 @@ object RepoAnalyzer {
         "other@example.org"
       }
       VisibleChange(Contributor("some@example.org", Contributor.AUTHOR), //
-                    visChange.contributors //
-                      .map(_.copy(email = reviewer)), //
-                    visChange.commitTime, visChange.repoName, change.highlightPersonalExchange)
+                     visChange.contributors.map(_.copy(email = reviewer)), //
+                     visChange.commitTime, visChange.repoName, change.highlightPersonalExchange)
     }
   }
 
@@ -182,14 +186,17 @@ object RepoAnalyzer {
     })
   }
 
-  def findRecursiv(files: Seq[File], filter: File => Boolean, matching: Seq[File] = Nil): Seq[File] = {
-    val sub: Seq[File] = files.filter(filter)
-    val singleMatch = sub.size == 1 && filter(sub(0))
-    if (files == Nil || singleMatch) {
-      matching ++ sub
-    } else {
-      findRecursiv(files.map(_.listFiles()).filterNot(_ == null).flatten, filter, sub ++ matching)
+  def findRecursiv(files: Seq[File], filter: File => Boolean): Seq[File] = {
+    def parFindRecursiv(parFiles: ParSeq[File], matching: ParSeq[File] = Nil.par): ParSeq[File] = {
+      val sub: ParSeq[File] = parFiles.filter(filter)
+      def isSingleMatch = sub.size == 1 && filter(sub.head)
+      if (parFiles == Nil.par || isSingleMatch) {
+        matching ++ sub
+      } else {
+        parFindRecursiv(parFiles.map(_.listFiles()).filterNot(_ == null).flatten, sub ++ matching)
+      }
     }
+    parFindRecursiv(files.par).seq
   }
 
   def writeToFile(s: String, file: File) {
@@ -213,10 +220,11 @@ object RepoAnalyzer {
     def elementsIn(text: String): Seq[FooterElement] = {
       val lines = text.split("\n")
       val footerPattern = "^([^ ]+):(.*)".r
-      val elements: Seq[FooterElement] = lines
-        .flatMap { case footerPattern(key, value) => Some(FooterElement(key, value.trim))
-      case _ => None
-                 }
+      val elements: Seq[FooterElement] = lines.flatMap {
+        //
+        case footerPattern(key, value) => Some(FooterElement(key, value.trim))
+        case _ => None
+      }
       elements
     }
   }

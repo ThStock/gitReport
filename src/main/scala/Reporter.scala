@@ -19,7 +19,7 @@ object Reporter extends App {
   val sprintLengthInDays = argsOpt(2).getOrElse("14").toInt
   val displayLimit = argsOpt(3).getOrElse("4000").toInt
 
-  val changes: Seq[VisibleRepo] = if (filenameToSearchForRepos == "--demo") {
+  def changes(): Seq[VisibleRepo] = if (filenameToSearchForRepos == "--demo") {
     println("... using demodata / --demo 1")
     DemoData.get(sprintLengthInDays)
   } else {
@@ -39,7 +39,7 @@ object Reporter extends App {
   }
 
   val t1 = System.currentTimeMillis()
-  new ReportGenerator(changes).write(sprintLengthInDays, displayLimit, repoActivityLimit)
+  new ReportGenerator(changes()).write(sprintLengthInDays, displayLimit, repoActivityLimit)
   val t2 = System.currentTimeMillis()
   println("reports generated in " + (t2 - t1) + " (ms)")
 
