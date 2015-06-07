@@ -13,6 +13,7 @@
     font-size: 150%;
     color: #eee8d5;
     text-align: center;
+    padding-bottom: 1em;
   }
   .branch-too-mutch {
     color: #dc322f;
@@ -22,7 +23,7 @@
     height: 10px;
     background-color: #dc322f;
     margin-bottom: .5em;
-    border-radius:3px;
+    border-radius: 3px;
   }
   .bar-66 {
     background-color: rgba(203, 75, 22, 0.5);
@@ -37,7 +38,7 @@
     background-color: #2aa198;
     height: 10px;
     width: 100%;
-    border-radius:3px;
+    border-radius: 3px;
   }
   .bar .needle {
     position: absolute;
@@ -134,14 +135,36 @@
     color: #eee8d5;
     font-weight: bolder;
   }
+  h5, h6 {
+    margin: 0;
+    font-weight: bolder;
+  }
+  header {
+    background-color: #2aa198;
+    color: #002b36;
+    padding-top: .6em;
+    padding-bottom: .5em;
+    padding-left: 2.5em;
+  }
+  footer {
+    clear: both;
+    text-align: right;
+    bottom: 0;
+    width: 100%;
+    height: 60px;
+    padding: 1em;
+    color: #2aa198;
+  }
 </style>
 </head>
 
 <body>
+<header>
+<img src="./git-report.svg" style="width: 2.3em; position: absolute; left: .3em; top: .3em;" />
 <h5>Gerrit Truck by Repo Report ({{{reportDate}}})</h5>
 <h6>{{{content.newestCommitDate}}} - {{{content.latestCommitDate}}} -
   <span title="sprint lenght in days">Δ {{{content.sprintLength}}}</span></h6>
-
+</header>
 <div class="container-fluid">
   <div class="row">
   {{#content.slots}}
@@ -184,5 +207,8 @@
   {{/content.slots}}
   </div>
 </div>
+<footer>
+  <img src="./git-report.svg" style="width: 3em; opacity: .33;" />
+</footer>
 </body>
 </html>
