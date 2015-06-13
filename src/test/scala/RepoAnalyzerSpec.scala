@@ -95,7 +95,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       val change = Change(authorEmail, "Bert", "Do Something", "4", 7, Nil, true)
 
       When("convert")
-      val result = RepoAnalyzer.toVisChange(repoName, authorsToEmails)(change)
+      val result = RepoAnalyzer.toVisChange(repoName, "/home/a/" + repoName, authorsToEmails)(change)
 
       Then("compare")
       assertResult(repoName)(result.repoName)
@@ -121,7 +121,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       val change = Change(authorEmail, "Bert", "Do Something", "41", 11, others, true)
 
       When("convert")
-      val result = RepoAnalyzer.toVisChange(repoName, authorsToEmails)(change)
+      val result = RepoAnalyzer.toVisChange(repoName, "/home/a/" + repoName, authorsToEmails)(change)
 
       Then("compare")
       assertResult(repoName)(result.repoName)
@@ -148,7 +148,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       val change = Change(authorEmail, "Bert", "Do Something", "41", 81, others, true)
 
       When("convert")
-      val result = RepoAnalyzer.toVisChange(repoName, authorsToEmails)(change)
+      val result = RepoAnalyzer.toVisChange(repoName, "/home/a/" + repoName, authorsToEmails)(change)
 
       Then("compare")
       assertResult(repoName)(result.repoName)
@@ -174,7 +174,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       val change = Change(authorEmail, "Bert", "Do Something", "41", 81, others, false)
 
       When("convert")
-      val result = RepoAnalyzer.toVisChange(repoName, authorsToEmails)(change)
+      val result = RepoAnalyzer.toVisChange(repoName, "/home/a/" + repoName, authorsToEmails)(change)
 
       Then("compare")
       assertResult(repoName)(result.repoName)

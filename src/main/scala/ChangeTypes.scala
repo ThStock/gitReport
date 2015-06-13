@@ -2,11 +2,22 @@ import ChangeTypes.Contributor.ContributorActivity
 
 object ChangeTypes {
 
+  trait VisibleChangeT {
+    def author: Contributor
+    val commitTime: Int
+    def repoName: String
+    def repoFullPath: String
+    def changeStatus(): VisibleChangeStatus
+    val highlightPersonalExchange: Boolean
+    def contributors: Seq[Contributor]
+    def members:Seq[Contributor]
+  }
   case class VisibleChange(author: Contributor,
                            contributors: Seq[Contributor],
                            commitTime: Int,
                            repoName: String,
-                           highlightPersonalExchange: Boolean) {
+                           repoFullPath: String,
+                           highlightPersonalExchange: Boolean) extends VisibleChangeT {
 
     val members = contributors :+ author
 
@@ -74,12 +85,21 @@ object ChangeTypes {
 
   }
 
+  trait VisibleRepoT {
+    def changes: Seq[VisibleChangeT]
+    def repoName: String
+    def repoFullPath: String
+    def branchNames: Seq[String]
+  }
+
   case class VisibleRepo(repoName: String,
-                         _changes: Seq[VisibleChange],
+                        repoFullPath: String,
+                         _changes: Seq[VisibleChangeT],
                          branchNames: Seq[String],
                          _sprintLengthInDays: Int,
                          _activity: Int = 0,
-                         topComitter: Boolean = false) {
+                         topComitter: Boolean = false) extends VisibleRepoT {
+    repoFullPath.getClass // XXX null check
 
     val activityIndex = _activity match {
       case i if i > 1 => "high"
@@ -110,7 +130,7 @@ object ChangeTypes {
 
     val changes = _changes
 
-    val members: Seq[Contributor] = VisibleRepo.toContibutors(_changes).map(_.copy(noGerrit = this.noGerrit))
+    val members: Seq[Contributor] = VisibleRepo.toContibutors(changes).map(_.copy(noGerrit = this.noGerrit))
 
     private val changeCountsByAuthor = _changes.groupBy(_.author).toSeq.map(_._2.size)
 
@@ -142,7 +162,7 @@ object ChangeTypes {
   }
 
   object VisibleRepo {
-    def toContibutors(changes: Seq[VisibleChange]): Seq[ChangeTypes.Contributor] = {
+    def toContibutors(changes: Seq[VisibleChangeT]): Seq[ChangeTypes.Contributor] = {
       object EmailAndTyp {
         def by(contributor: Contributor) = EmailAndTyp(contributor.email, "")
       }

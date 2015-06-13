@@ -1,7 +1,9 @@
-import ReportGenerator.ActivityScore
+import ChangeTypes._
+import ReportGenerator.{ActivityScore, Segmented, Slot}
+import org.scalamock.scalatest.MockFactory
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
-class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen {
+class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory {
 
   feature("activity score") {
     scenario("invalid params") {
@@ -256,6 +258,89 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen {
       Then("check")
 
       assertResult(Seq(Seq(1), Seq(7), Nil, Nil))(result)
+    }
+  }
+
+  feature("write") {
+    scenario("empty") {
+      Given("a")
+      val repos:Seq[VisibleRepoT] = Nil
+      val diskIo = mock[ReportGenerator.DiskIoT]
+
+      (diskIo.copyToOutputFolder _).expects(*).repeat(6)
+
+      When("write")
+      new ReportGenerator(repos).writeTruckByRepo(0, repos.flatMap(_.changes), 1, 1, diskIo)
+
+      Then("check")
+    }
+
+    scenario("single") {
+      Given("a")
+      val repo = stub[VisibleRepoT]
+      val repos = Seq(repo)
+      val diskIo = mock[ReportGenerator.DiskIoT]
+      val change = stub[VisibleChangeT]
+      val author = Contributor("q@example.org", Contributor.AUTHOR)
+      (change.members _).when().returning(Seq(author)).repeat(6)
+      (change.contributors _).when().returning(Seq(author)).repeat(12)
+      (change.author _).when().returning(author).repeat(6)
+      (change.repoName _).when().returning("repoName").once()
+      (change.repoFullPath _).when().returning("/home/git/repoName").twice()
+
+      val visRepo = VisibleRepo("repoName", "/home/git/repoName", Seq(change), Seq("master"), 1, 2, true)
+      val o = Segmented(Seq(Slot(Seq(visRepo)), Slot(Nil), Slot(Nil)), "1970-01-01 01:00:00", "1970-01-01 01:00:00", 1)
+      (diskIo.writeByNameToDisk _).expects("truckByProject", o, "truckByProject0").once()
+      (diskIo.copyToOutputFolder _).expects(*).anyNumberOfTimes()
+      (repo.changes _).when().returning(Seq(change)).once()
+      (repo.branchNames _).when().returning(Seq("master")).once()
+      (repo.repoFullPath _).when().returning("/home/git/repoName").once() // TODO missing
+
+      When("write")
+      new ReportGenerator(repos).writeTruckByRepo(0, repos.flatMap(_.changes), 10, 1, diskIo)
+
+      Then("check")
+    }
+
+    scenario("two") {
+      Given("a")
+      val diskIo = mock[ReportGenerator.DiskIoT]
+      val author = Contributor("q@example.org", Contributor.AUTHOR)
+      val changeA = stub[VisibleChangeT]
+      (changeA.members _).when().returning(Seq(author))
+      (changeA.contributors _).when().returning(Seq(author))
+      (changeA.author _).when().returning(author)
+      (changeA.repoName _).when().returning("repoName").once()
+      (changeA.repoFullPath _).when().returning("/home/git/a/repoName").anyNumberOfTimes()
+
+      val changeB = stub[VisibleChangeT]
+      (changeB.members _).when().returning(Seq(author))
+      (changeB.contributors _).when().returning(Seq(author))
+      (changeB.author _).when().returning(author)
+      (changeB.repoName _).when().returning("repoName").once()
+      (changeB.repoFullPath _).when().returning("/home/git/b/repoName").anyNumberOfTimes()
+
+      val visRepoA = VisibleRepo("repoName", "/home/git/a/repoName", Seq(changeA), Seq("master"), 1, 2, true)
+      val visRepoB = VisibleRepo("repoName", "/home/git/b/repoName", Seq(changeB), Seq("develop"), 1, 2, true)
+      val o = Segmented(Seq(Slot(Seq(visRepoA)), Slot(Seq(visRepoB)), Slot(Nil)), "1970-01-01 01:00:00", "1970-01-01 01:00:00", 1)
+      (diskIo.writeByNameToDisk _).expects("truckByProject", o, "truckByProject0").once()
+      (diskIo.copyToOutputFolder _).expects(*).anyNumberOfTimes()
+
+      val repoA = stub[VisibleRepoT]
+      val repoB = stub[VisibleRepoT]
+      val repos = Seq(repoA, repoB)
+      (repoA.changes _).when().returning(Seq(changeA)).once()
+      (repoA.branchNames _).when().returning(Seq("master")).once()
+      (repoA.repoFullPath _).when().returning("/home/git/a/repoName").anyNumberOfTimes()
+
+      (repoB.changes _).when().returning(Seq(changeB)).once()
+      (repoB.branchNames _).when().returning(Seq("develop")).once()
+      (repoB.repoFullPath _).when().returning("/home/git/b/repoName").anyNumberOfTimes()
+
+      When("write")
+      new ReportGenerator(repos).writeTruckByRepo(0, repos.flatMap(_.changes), 10, 1, diskIo)
+
+      Then("check")
     }
   }
 

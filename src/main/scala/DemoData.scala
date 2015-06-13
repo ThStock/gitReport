@@ -45,7 +45,7 @@ object DemoData {
   }
 
   private def vRepo(name: String, number: Int, _changes: Seq[(String) => VisibleChange], sprintLengthInDays: Int) = {
-    VisibleRepo(repoName = name + number,
+    VisibleRepo(repoName = name + number, repoFullPath = "/home/any/git/" + name + number,
       _changes = _changes.map(_.apply(name + number)).filter(bySprintLenght(sprintLengthInDays)),
       branchNames = Seq.tabulate(number % 3 + 1)(_ + "b"),
       _sprintLengthInDays = sprintLengthInDays)
@@ -65,7 +65,7 @@ object DemoData {
     }
 
 
-    VisibleChange(c1, reviewer, now, repoName, true)
+    VisibleChange(c1, reviewer, now, repoName, "/home/any/git/" + repoName, true)
   }
 
   val counter = new AtomicInteger(1)

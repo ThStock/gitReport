@@ -18,10 +18,10 @@ import scala.collection.parallel.ParSeq
 
 class RepoAnalyzer(repo: File, commitLimitDays: Long) {
 
-  private val repository: Repository = new FileRepositoryBuilder()
-    .setGitDir(repo)
-    .readEnvironment()
-    .findGitDir()
+  private val repository: Repository = new FileRepositoryBuilder() //
+    .setGitDir(repo) //
+    .readEnvironment() //
+    .findGitDir() //
     .build()
 
   private val git = new Git(repository)
@@ -36,10 +36,13 @@ class RepoAnalyzer(repo: File, commitLimitDays: Long) {
 
   def name(): String = toName()
 
-  def toName(dir: File = repo): String = dir.getName match {
-    case ".git" => toName(dir.getParentFile)
-    case "." => toName(dir.getParentFile)
-    case dirName => dirName
+  def absolutPath(): String = toFolder().getAbsolutePath // TODO TEST
+  def toName(dir: File = repo): String = toFolder(dir).getName
+
+  def toFolder(dir: File = repo): File = dir.getName match {
+    case ".git" => toFolder(dir.getParentFile)
+    case "." => toFolder(dir.getParentFile)
+    case dirName => dir
   }
 
   private def notesOf(commit: RevCommit): Seq[FooterElement] = {
@@ -120,13 +123,14 @@ object RepoAnalyzer {
       val authorsToEmails: Map[String, String] = allChanges //
         .map(c => (c.authorName, c.authorEmail)).foldLeft(Map[String, String]())(_ + _)
 
-      val result: Seq[VisibleChange] = allChanges.map(toVisChange(analy.toName(), authorsToEmails))
-      new VisibleRepo(analy.name(), result, analy.branchNames(), commitLimitDays)
+      val result: Seq[VisibleChange] = allChanges.map(toVisChange(analy.toName(), analy.absolutPath(), authorsToEmails))
+      new VisibleRepo(analy.name(), analy.toFolder(repo).getAbsolutePath, result, analy.branchNames(), commitLimitDays)
     }.seq
 
   }
 
-  def toVisChange(repoName: String, authorsToEmails: Map[String, String])(change: Change): VisibleChange = {
+  def toVisChange(repoName: String, absolutRepoPath: String, authorsToEmails: Map[String, String]) //
+                 (change: Change): VisibleChange = {
     val author = Contributor(change.authorEmail, Contributor.AUTHOR)
 
     def lookup(username: String): String = {
@@ -146,18 +150,15 @@ object RepoAnalyzer {
 
       val signersWithoutFirst = signers.map(_.copy(_typ = Contributor.AUTHOR)).filterNot(_ == signerAuthor)
 
-      VisibleChange(signerAuthor,
-                     Seq(author.copy(_typ = Contributor.REVIWER, email = author.email.toLowerCase)) ++ reviewers ++
-                       signersWithoutFirst,
-                     change.commitTime,
-                     repoName,
-                     change.highlightPersonalExchange)
+      VisibleChange(signerAuthor, Seq(author.copy(_typ = Contributor.REVIWER, email = author.email.toLowerCase)) ++ reviewers ++
+        signersWithoutFirst, change.commitTime, repoName, absolutRepoPath, change.highlightPersonalExchange)
 
     } else {
       VisibleChange(author.copy(email = author.email.toLowerCase),
                      reviewers ++ signers,
                      change.commitTime,
                      repoName,
+                     absolutRepoPath,
                      change.highlightPersonalExchange)
     }
 
@@ -171,7 +172,7 @@ object RepoAnalyzer {
       }
       VisibleChange(Contributor("some@example.org", Contributor.AUTHOR), //
                      visChange.contributors.map(_.copy(email = reviewer)), //
-                     visChange.commitTime, visChange.repoName, change.highlightPersonalExchange)
+                     visChange.commitTime, visChange.repoName, visChange.repoFullPath, change.highlightPersonalExchange)
     }
   }
 
