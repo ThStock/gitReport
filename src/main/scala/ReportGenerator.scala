@@ -95,6 +95,7 @@ class ReportGenerator(repos: Seq[VisibleRepoT]) {
     diskIo.copyToOutputFolder("octoicons/octicons.woff")
     diskIo.copyToOutputFolder("bootstrap-3.3.2-dist/css/bootstrap.min.css")
     diskIo.copyToOutputFolder("git-report-xs.png")
+    diskIo.copyToOutputFolder("git-report.svg")
   }
 
   private lazy val outDir: File = {
