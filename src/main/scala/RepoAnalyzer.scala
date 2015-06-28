@@ -147,10 +147,12 @@ object RepoAnalyzer {
 
     val visChange = if (signers != Nil) {
       val signerAuthor = Contributor(signers.head.email.toLowerCase, Contributor.AUTHOR)
-
       val signersWithoutFirst = signers.map(_.copy(_typ = Contributor.AUTHOR)).filterNot(_ == signerAuthor)
 
-      VisibleChange(signerAuthor, Seq(author.copy(_typ = Contributor.REVIWER, email = author.email.toLowerCase)) ++ reviewers ++
+      def noSigner(contributor: Contributor) = signers.map(_.email).contains(contributor.email)
+
+      VisibleChange(signerAuthor, (Seq(author.copy(_typ = Contributor.REVIWER, email = author.email.toLowerCase)) ++
+        reviewers).filterNot(noSigner) ++
         signersWithoutFirst, change.commitTime, repoName, absolutRepoPath, change.highlightPersonalExchange)
 
     } else {
@@ -218,6 +220,9 @@ object RepoAnalyzer {
   }
 
   object FooterElement {
+
+    def signer(name:String, email:String) = FooterElement("Signed-off-by", name + " <" + email + ">")
+
     def elementsIn(text: String): Seq[FooterElement] = {
       val lines = text.split("\n")
       val footerPattern = "^([^ ]+):(.*)".r

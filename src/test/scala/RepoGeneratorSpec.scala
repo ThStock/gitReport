@@ -264,7 +264,7 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory 
   feature("write") {
     scenario("empty") {
       Given("a")
-      val repos:Seq[VisibleRepoT] = Nil
+      val repos: Seq[VisibleRepoT] = Nil
       val diskIo = mock[ReportGenerator.DiskIoT]
 
       (diskIo.copyToOutputFolder _).expects("octoicons/octicons.css")

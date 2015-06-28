@@ -67,6 +67,8 @@ object ChangeTypes {
     val activityValue = activity.key
     val typ: String = _typ.name
 
+    def copyAsAuthor() = copy(_typ = Contributor.AUTHOR)
+
   }
 
   object Contributor {
@@ -169,7 +171,7 @@ object ChangeTypes {
       case class EmailAndTyp(email: String, typ: String)
 
       val allMembers = changes.flatMap(_.members)
-      val allMembersEmails = allMembers.map(_.email).toSet
+      val allMembersEmails = allMembers.filter(_.isAuthor).map(_.email).toSet
       val allChangesByAuthor = changes.groupBy(_.author.copy(_typ = ContributorType("player")))
       val allChangesByContributor = changes.groupBy(_.contributors).flatMap(in => {
         in._1.map(key => (EmailAndTyp.by(key), in._2))
@@ -184,7 +186,8 @@ object ChangeTypes {
           val self = EmailAndTyp(contributor.email, "")
           val changesOf = allChangesByAuthor(contributor)
           val membersSimpyfied = changesOf.flatMap(_.members).map(EmailAndTyp.by)
-          val changesOfContibutors = changesOf.map(_.contributors).map(in => in.map(EmailAndTyp.by))
+          val changesOfContibutors = changesOf.map(_.contributors.filterNot(_.isAuthor))
+            .map(in => in.map(EmailAndTyp.by))
           val selfReviews = changesOfContibutors.filter(_.contains(self))
           val contributorsSimpyfied = changesOf.flatMap(_.contributors).map(EmailAndTyp.by)
           val contributions = allChangesByContributor.get(EmailAndTyp.by(contributor))
@@ -196,8 +199,9 @@ object ChangeTypes {
           val repoHasMoreThenOneMember = membersSimpyfied.toSet.size > 1
           val repoHasMoreThenOneContributors = contributorsSimpyfied.toSet.size > 1
 
-          if (allMembersEmails.size > 1 && membersSimpyfied.toSet.size == allMembersEmails.size &&
-            selfReviewsVsChanges < 0.1d && isNoDirectCommit) {
+          val exchangeWithHalfOfTeam = allMembersEmails.size.toDouble / membersSimpyfied.toSet.size.toDouble < 2
+
+          if (allMembersEmails.size > 1 && exchangeWithHalfOfTeam && selfReviewsVsChanges < 0.1d && isNoDirectCommit) {
             ContributorActivity.HIGHEST
           } else if (allMembersEmails.size > 1 && selfReviewsVsChanges < 0.2d && isNoDirectCommit) {
             ContributorActivity.HIGH
@@ -213,7 +217,8 @@ object ChangeTypes {
         }
       }
 
-      allMembers.map(in => in.copy(_typ = ContributorType("player"))).toSet[Contributor]
+      allMembers.map(in => in.copy(_typ = ContributorType("player")))
+        .toSet[Contributor]
         .map(in => in.copy(activity = selectActivity(in)))
         .toSeq
         .sortWith(_.email < _.email)

@@ -117,7 +117,8 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       val reviewerEmail = "Reviewer@Example.org"
       val authorsToEmails = Map[String, String]()
       val others: Seq[FooterElement] = Seq(FooterElement("Code-Review", "Some"),
-                                            FooterElement("Code-Review", "Random J Developer <" + reviewerEmail + ">"))
+        FooterElement("Code-Review", "Random J Developer <" + reviewerEmail + ">")
+      )
       val change = Change(authorEmail, "Bert", "Do Something", "41", 11, others, true)
 
       When("convert")
@@ -130,14 +131,21 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult("author")(result.author.typ)
       assertResult(11)(result.commitTime)
       assertResult("Time: 1970-01-01 01:00:11\nRepo: a")(result.title)
-      assertResult(Seq(Contributor("Some", Contributor.REVIWER),
-                        Contributor(reviewerEmail.toLowerCase, Contributor.REVIWER)))(result.contributors)
-      assertResult(Seq(Contributor("Some", Contributor.REVIWER),
-                        Contributor(reviewerEmail.toLowerCase, Contributor.REVIWER),
-                        Contributor(authorEmail.toLowerCase, Contributor.AUTHOR)))(result.members)
+
+      val expectedContributors: Seq[Contributor] = //
+        Seq(Contributor("Some", Contributor.REVIWER), Contributor(reviewerEmail.toLowerCase, Contributor.REVIWER))
+      assert(expectedContributors == result.contributors)
+
+      val expectedMembers: Seq[Contributor] = Seq(//
+        Contributor("Some", Contributor.REVIWER),
+        Contributor(reviewerEmail.toLowerCase, Contributor.REVIWER),
+        Contributor(authorEmail.toLowerCase, Contributor.AUTHOR)
+      )
+      assert(expectedMembers == result.members)
       assertResult(VisibleChangeStatus.ok)(result.changeStatus)
       assertResult("ok")(result.color)
     }
+
     scenario("convert commit with signer") {
       Given("change with author and signer")
       val repoName = "a"
@@ -158,8 +166,38 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult(81)(result.commitTime)
       assertResult("Time: 1970-01-01 01:01:21\nRepo: a")(result.title)
       assertResult(Seq(Contributor(authorEmail.toLowerCase, Contributor.REVIWER)))(result.contributors)
-      assertResult(Seq(Contributor(authorEmail.toLowerCase, Contributor.REVIWER),
-                        Contributor(signerEmail.toLowerCase, Contributor.AUTHOR)))(result.members)
+      val expectedMembers: Seq[Contributor] = //
+        Seq(Contributor(authorEmail.toLowerCase, Contributor.REVIWER), //
+          Contributor(signerEmail.toLowerCase, Contributor.AUTHOR) //
+        )
+      assert(expectedMembers == result.members)
+      assertResult(VisibleChangeStatus.ok)(result.changeStatus)
+      assertResult("ok")(result.color)
+    }
+
+    scenario("convert commit with two signers") {
+      Given("change with author and signer")
+      val repoName = "a"
+      val authorsToEmails = Map[String, String]()
+      val authorEmail: String = "Bert@example.org"
+      val signerEmail: String = "Random@developer.example.org"
+      val others: Seq[FooterElement] = Seq(FooterElement.signer("Random J Developer", signerEmail),
+        FooterElement.signer("Bert", authorEmail)
+      )
+      val change = Change(authorEmail, "Bert", "Do Something", "41", 81, others, true)
+
+      When("convert")
+      val result = RepoAnalyzer.toVisChange(repoName, "/home/a/" + repoName, authorsToEmails)(change)
+
+      Then("compare")
+      assertResult(signerEmail.toLowerCase)(result.author.email)
+      assertResult("author")(result.author.typ)
+      assertResult(Seq(Contributor(authorEmail.toLowerCase, Contributor.AUTHOR)))(result.contributors)
+      val expectedMembers: Seq[Contributor] = //
+        Seq(Contributor(authorEmail.toLowerCase, Contributor.AUTHOR),
+          Contributor(signerEmail.toLowerCase, Contributor.AUTHOR) //
+        )
+      assert(expectedMembers == result.members)
       assertResult(VisibleChangeStatus.ok)(result.changeStatus)
       assertResult("ok")(result.color)
     }
@@ -184,8 +222,9 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult(81)(result.commitTime)
       assertResult("Time: 1970-01-01 01:01:21\nRepo: a")(result.title)
       assertResult(Seq(Contributor("other@example.org", Contributor.REVIWER)))(result.contributors)
-      assertResult(Seq(Contributor("other@example.org", Contributor.REVIWER),
-                        Contributor("some@example.org", Contributor.AUTHOR)))(result.members)
+      assertResult(Seq(Contributor("other@example.org", Contributor.REVIWER), Contributor("some@example.org", Contributor.AUTHOR)
+      )
+      )(result.members)
       assertResult(VisibleChangeStatus.ok)(result.changeStatus)
       assertResult("ok")(result.color)
     }
