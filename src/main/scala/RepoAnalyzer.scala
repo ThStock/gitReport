@@ -4,6 +4,7 @@ import java.nio.file.Files
 
 import ChangeTypes.{Contributor, ContributorType, VisibleChange, VisibleRepo}
 import RepoAnalyzer._
+import resource._
 import com.typesafe.config.{ConfigException, ConfigFactory}
 import org.eclipse.jgit.api._
 import org.eclipse.jgit.api.errors.NoHeadException
@@ -72,41 +73,46 @@ class RepoAnalyzer(repo: File, commitLimitDays: Long) {
   }
 
   def changes(): Seq[Change] = {
+    def logSkipMessage(msg:String) = {
+      System.err.println("W: skipping " + repo.getAbsolutePath + " " + msg)
+    }
     try {
-      val logCmd = git.log()
-
-      branchRefs.foreach(ref => logCmd.add(ref.getObjectId))
-
-      val walk = new RevWalk(git.getRepository)
       val headId = git.getRepository.resolve(Constants.HEAD)
       if (headId == null) {
-        System.err.println("E: skipping " + repo.getAbsolutePath + " no HEAD")
+        logSkipMessage("no HEAD")
         Nil
       } else {
         val now = System.currentTimeMillis()
 
         val timeFilter = CommitTimeRevFilter.between(now - 86400000L * commitLimitDays, now)
-        walk.setRevFilter(AndRevFilter.create(RevFilter.NO_MERGES, timeFilter))
-        val root = walk.parseCommit(headId)
-        walk.markStart(root)
-
-        def changesOfWalk(): Seq[RevCommit] = {
-          val change = walk.next()
-          if (change != null) {
-            Seq(change) ++ changesOfWalk()
-          } else {
-            walk.release()
-            Nil
+        implicit def connectionResource[A <: RevWalk] = new Resource[A] {
+          override def close(r: A) = r.dispose()
+          override def closeAfterException(r: A, t: Throwable): Unit = {
+            logSkipMessage("resource " + t.getMessage)
+            close(r)
           }
         }
         val configFile = new File(repo.getParentFile.getAbsoluteFile, ".git-report.conf")
         val conf = RepoConfig(ConfigFactory.parseFile(configFile))
         def toChangeFn(commit: RevCommit) = toChange(conf, commit)
-        changesOfWalk().toList.flatMap(toChangeFn)
+        managed(new RevWalk(git.getRepository)).map{ walk:RevWalk =>
+          walk.setRevFilter(AndRevFilter.create(RevFilter.NO_MERGES, timeFilter))
+          val root = walk.parseCommit(headId)
+          walk.markStart(root)
+          def changesOfWalk(): Seq[RevCommit] = {
+            val change = walk.next()
+            if (change != null) {
+              Seq(change) ++ changesOfWalk()
+            } else {
+              Nil
+            }
+          }
+          changesOfWalk().flatMap(toChangeFn)
+        }.opt.orElse(Some(Nil)).get
       }
     } catch {
-      case e@(_: MissingObjectException | _: NoHeadException | _: RevWalkException | _: NullPointerException) => {
-        System.err.println("E: skipping " + repo.getAbsolutePath + " " + e.getMessage)
+      case e@(_: MissingObjectException | _: NoHeadException  | _: NullPointerException) => {
+        logSkipMessage(e.getMessage)
         Nil
       }
     }
