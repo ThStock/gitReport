@@ -14,6 +14,8 @@
     color: #eee8d5;
     text-align: center;
     padding-bottom: 1em;
+    -webkit-backface-visibility: hidden;
+    -webkit-transform:translate3d(0,0,0);
   }
   .branch-too-mutch {
     color: #dc322f;
@@ -73,19 +75,23 @@
     margin: 0;
     margin-bottom: .6em;
     padding: 0;
+    position: relative;
     -webkit-transition: all .2s ease-in-out; /* Safari and Chrome */
     -moz-transition: all .2s ease-in-out; /* Firefox */
     -ms-transition: all .2s ease-in-out; /* IE 9 */
     -o-transition: all .2s ease-in-out; /* Opera */
     transition: all .2s ease-in-out;
+    -webkit-transform-style: preserve-3d;
+    z-index: 10;
   }
   .contributor img:hover {
-    -webkit-transform:scale(3.25); /* Safari and Chrome */
-    -moz-transform:scale(3.25); /* Firefox */
-    -ms-transform:scale(3.25); /* IE 9 */
-    -o-transform:scale(3.25); /* Opera */
-    transform:scale(3.25);
-    opacity: 1.0 !important;
+    -webkit-transform:scale(3); /* Safari and Chrome */
+    -moz-transform:scale(3); /* Firefox */
+    -ms-transform:scale(3); /* IE 9 */
+    -o-transform:scale(3); /* Opera */
+    transform:scale(3);
+    opacity: 1 !important;
+    z-index: 100 !important;
   }
   .contributor.lowest img {
     opacity: 0.1;
@@ -194,7 +200,7 @@
             <div class="col-xs-12">
             <div class="members">
                     {{#members}}
-                      <span class="contributor {{{activityValue}}} {{#noGerrit}}no-gerrit-contrib{{/noGerrit}}" >
+                      <span class="contributor {{{activityValue}}}{{#noGerrit}} no-gerrit-contrib{{/noGerrit}}" >
                         <img src="https://lb.gravatar.com/avatar/{{{hash}}}?s=160&amp;d=identicon" title="{{{email}}} - {{{typ}}}" />
                       </span>
                     {{/members}}
