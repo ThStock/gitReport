@@ -4,6 +4,54 @@ import org.scalatest._
 
 class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
 
+  feature("participation") {
+
+    scenario("empty") {
+      Given("a")
+      When("calc")
+      val result: Seq[Int] = RepoAnalyzer.calcParticipationPercentages(Nil, 1, 100, 0)
+
+      Then("calculated")
+      assert(result == Seq(0))
+    }
+
+    scenario("single") {
+      Given("a")
+      When("calc")
+      val result: Seq[Int] = RepoAnalyzer.calcParticipationPercentages(Seq(1), 1, 100, 0)
+
+      Then("calculated")
+      assert(result == Seq(100))
+    }
+
+    scenario("1 of 4") {
+      Given("a")
+      When("calc")
+      val result: Seq[Int] = RepoAnalyzer.calcParticipationPercentages(Seq(1), 4, 100, 0)
+
+      Then("calculated")
+      assert(result == Seq(100, 0, 0, 0))
+    }
+
+    scenario("2 of 6") {
+      Given("a")
+      When("calc")
+      val result: Seq[Int] = RepoAnalyzer.calcParticipationPercentages(Seq(210, 250), 6, 100, 534)
+
+      Then("calculated")
+      assert(result == Seq(0, 0, 0, 100, 0, 0))
+    }
+
+    scenario("3 of 2") {
+      Given("a")
+      When("calc")
+      val result: Seq[Int] = RepoAnalyzer.calcParticipationPercentages(Seq(1, 50, 110), 2, 100, 0)
+
+      Then("calculated")
+      assert(result == Seq(100, 50))
+    }
+  }
+
   feature("RepoAnalyser") {
     scenario("md5 calculation for gravatar icons") {
       Given("an emailaddress")
@@ -92,7 +140,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       val repoName = "a"
       val authorsToEmails = Map[String, String]()
       val authorEmail: String = "bert@example.org"
-      val change = Change(authorEmail, "Bert", "Do Something", "4", 7, Nil, true)
+      val change = Change(authorEmail, "Bert", "Do Something", "4", 7000, Nil, true)
 
       When("convert")
       val result = RepoAnalyzer.toVisChange(repoName, "/home/a/" + repoName, authorsToEmails)(change)
@@ -102,7 +150,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult(authorEmail)(result.author.email)
       assertResult(true)(result.author.isAuthor)
       assertResult("author")(result.author.typ)
-      assertResult(7)(result.commitTime)
+      assertResult(7000)(result.commitTimeMillis)
       assertResult("Time: 1970-01-01 01:00:07\nRepo: a")(result.title)
       assertResult(Nil)(result.contributors)
       assertResult(Seq(Contributor(authorEmail, Contributor.AUTHOR)))(result.members)
@@ -119,7 +167,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       val others: Seq[FooterElement] = Seq(FooterElement("Code-Review", "Some"),
         FooterElement("Code-Review", "Random J Developer <" + reviewerEmail + ">")
       )
-      val change = Change(authorEmail, "Bert", "Do Something", "41", 11, others, true)
+      val change = Change(authorEmail, "Bert", "Do Something", "41", 11000, others, true)
 
       When("convert")
       val result = RepoAnalyzer.toVisChange(repoName, "/home/a/" + repoName, authorsToEmails)(change)
@@ -129,7 +177,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult(authorEmail.toLowerCase)(result.author.email)
       assertResult(true)(result.author.isAuthor)
       assertResult("author")(result.author.typ)
-      assertResult(11)(result.commitTime)
+      assertResult(11000)(result.commitTimeMillis)
       assertResult("Time: 1970-01-01 01:00:11\nRepo: a")(result.title)
 
       val expectedContributors: Seq[Contributor] = //
@@ -153,7 +201,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       val authorEmail: String = "Bert@example.org"
       val signerEmail: String = "Random@developer.example.org"
       val others: Seq[FooterElement] = Seq(FooterElement("Signed-off-by", "Random J Developer <" + signerEmail + ">"))
-      val change = Change(authorEmail, "Bert", "Do Something", "41", 81, others, true)
+      val change = Change(authorEmail, "Bert", "Do Something", "41", 81000, others, true)
 
       When("convert")
       val result = RepoAnalyzer.toVisChange(repoName, "/home/a/" + repoName, authorsToEmails)(change)
@@ -163,7 +211,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult(signerEmail.toLowerCase)(result.author.email)
       assertResult(true)(result.author.isAuthor)
       assertResult("author")(result.author.typ)
-      assertResult(81)(result.commitTime)
+      assertResult(81000)(result.commitTimeMillis)
       assertResult("Time: 1970-01-01 01:01:21\nRepo: a")(result.title)
       assertResult(Seq(Contributor(authorEmail.toLowerCase, Contributor.REVIWER)))(result.contributors)
       val expectedMembers: Seq[Contributor] = //
@@ -209,7 +257,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       val authorEmail: String = "Bert@example.org"
       val signerEmail: String = "Random@developer.example.org"
       val others: Seq[FooterElement] = Seq(FooterElement("Signed-off-by", "Random J Developer <" + signerEmail + ">"))
-      val change = Change(authorEmail, "Bert", "Do Something", "41", 81, others, false)
+      val change = Change(authorEmail, "Bert", "Do Something", "41", 81000, others, false)
 
       When("convert")
       val result = RepoAnalyzer.toVisChange(repoName, "/home/a/" + repoName, authorsToEmails)(change)
@@ -219,7 +267,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult("some@example.org")(result.author.email)
       assertResult(true)(result.author.isAuthor)
       assertResult("author")(result.author.typ)
-      assertResult(81)(result.commitTime)
+      assertResult(81000)(result.commitTimeMillis)
       assertResult("Time: 1970-01-01 01:01:21\nRepo: a")(result.title)
       assertResult(Seq(Contributor("other@example.org", Contributor.REVIWER)))(result.contributors)
       assertResult(Seq(Contributor("other@example.org", Contributor.REVIWER), Contributor("some@example.org", Contributor.AUTHOR)

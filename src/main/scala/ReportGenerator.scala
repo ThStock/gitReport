@@ -12,19 +12,22 @@ class ReportGenerator(repos: Seq[VisibleRepoT]) {
 
   def write(sprintLengthInDays: Int, displayLimit: Int, repoActivityLimit: Int) {
     if (repos != Nil) {
-      val content: Seq[VisibleChangeT] = repos.flatMap(_.changes).sortBy(_.commitTime).reverse
+      val content: Seq[VisibleChangeT] = repos.flatMap(_.changes).sortBy(_.commitTimeMillis).reverse
 
       writeTruckByRepo(repoActivityLimit, content, displayLimit, sprintLengthInDays, new DiskIo(outDir))
     }
   }
+
+  private lazy val repoFullPathToRepos: Map[String, VisibleRepoT] = repos.groupBy(_.repoFullPath)
+    .map(in ⇒ (in._1, in._2.head))
 
   def writeTruckByRepo(repoActivityLimit: Int,
                        content: Seq[VisibleChangeT],
                        displayLimit: Int,
                        sprintLengthInDays: Int,
                        diskIo: DiskIoT) {
-    val fullPathToBranchNames:Map[String, Seq[String]] = repos.groupBy(_.repoFullPath)
-      .map(kv => (kv._1, kv._2.flatMap(_.branchNames)))
+    val fullPathToBranchNames:Map[String, Seq[String]] = repoFullPathToRepos
+      .map(kv => (kv._1, kv._2.branchNames))
     def branchNamesOf(key: String):Seq[String] = {
 
       val branches:Seq[String] = fullPathToBranchNames.getOrElse(key, Nil)
@@ -38,13 +41,13 @@ class ReportGenerator(repos: Seq[VisibleRepoT]) {
     val latestCommitDate = if (content.isEmpty) {
       0
     } else {
-      content.map(_.commitTime).max.toLong
+      content.map(_.commitTimeMillis).max
     }
 
-    def writeReport(dayDelta: Int) {
+    def writeReport() {
 
-      val filterCommitDate = latestCommitDate - dayDelta * 86400L
-      val contentListed = content.filter(_.commitTime <= filterCommitDate).take(displayLimit)
+      val filterCommitDate = latestCommitDate
+      val contentListed = content.filter(_.commitTimeMillis <= filterCommitDate).take(displayLimit)
       if (contentListed != Nil) {
         val contentGrouped = contentListed.groupBy(_.repoFullPath.toString) // TODO group by repo full name
           .filter(_._2.size > repoActivityLimit)
@@ -52,12 +55,14 @@ class ReportGenerator(repos: Seq[VisibleRepoT]) {
         val truckByProject: Seq[VisibleRepo] = contentGrouped.toSeq.map { in =>
           val repoFullPath = in._2.map(_.repoFullPath).head.toString
           val repoName = in._2.map(_.repoName).head.toString
-          VisibleRepo(repoName,
-                       repoFullPath,
-                       in._2,
-                       branchNamesOf(repoFullPath),
-                       sprintLengthInDays,
-                       ReportGenerator.repoActivityScoreOf(in._1, contentGrouped).intValue)
+          VisibleRepo(repoName = repoName,
+                       repoFullPath = repoFullPath,
+                       _changes = in._2,
+                       branchNames = branchNamesOf(repoFullPath),
+                       _sprintLengthInDays = sprintLengthInDays,
+                       participationPercentages = repoFullPathToRepos.get(repoFullPath).get.participationPercentages,
+                       _activity = ReportGenerator.repoActivityScoreOf(in._1, contentGrouped).intValue
+          )
         }
 
         if (truckByProject == Nil) {
@@ -80,15 +85,15 @@ class ReportGenerator(repos: Seq[VisibleRepoT]) {
         }
 
         val segemnts = Segmented(slots = Seq(Slot(segments(0)), Slot(segments(1)), Slot(segments(2))),
-                                  latestCommitDate = ReportGenerator.formatedDateBySecs(contentListed.map(_.commitTime).min),
-                                  newestCommitDate = ReportGenerator.formatedDateBySecs(filterCommitDate),
+                                  latestCommitDate = ReportGenerator.formatedDateByMillis(contentListed.map(_.commitTimeMillis).min),
+                                  newestCommitDate = ReportGenerator.formatedDateByMillis(filterCommitDate),
                                   sprintLength = sprintLengthInDays)
-        diskIo.writeByNameToDisk("truckByProject", segemnts, "truckByProject" + dayDelta)
+        diskIo.writeByNameToDisk("truckByProject", segemnts, "truckByProject" + 0) // TODO remove zero
 
       }
     }
 
-    writeReport(0)
+    writeReport()
     diskIo.copyToOutputFolder("octoicons/octicons.css")
     diskIo.copyToOutputFolder("octoicons/octicons.eot")
     diskIo.copyToOutputFolder("octoicons/octicons.svg")
@@ -199,11 +204,7 @@ object ReportGenerator {
     getClass.getResourceAsStream(fileName)
   }
 
-  def formatedDateBySecs(date: Long): String = {
-    formatedDateByMillis(1000L * date)
-  }
-
-  private def formatedDateByMillis(date: Long): String = {
+  def formatedDateByMillis(date: Long): String = {
     formatedDate(new Date(date))
   }
 

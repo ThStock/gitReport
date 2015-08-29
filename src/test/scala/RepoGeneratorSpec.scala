@@ -284,6 +284,7 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory 
     scenario("single") {
       Given("a")
       val repo = stub[VisibleRepoT]
+      (repo.participationPercentages _).when().returning(Nil).once()
       val repos = Seq(repo)
       val diskIo = mock[ReportGenerator.DiskIoT]
       val change = stub[VisibleChangeT]
@@ -292,15 +293,15 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory 
       (change.contributors _).when().returning(Seq(author)).repeat(12)
       (change.author _).when().returning(author).repeat(6)
       (change.repoName _).when().returning("repoName").once()
-      (change.repoFullPath _).when().returning("/home/git/repoName").twice()
+      (change.repoFullPath _).when().returning("/home/git/r/repoName").twice()
 
-      val visRepo = VisibleRepo("repoName", "/home/git/repoName", Seq(change), Seq("master"), 1, 2, true)
+      val visRepo = newRepo("r", change, "master")
       val o = Segmented(Seq(Slot(Seq(visRepo)), Slot(Nil), Slot(Nil)), "1970-01-01 01:00:00", "1970-01-01 01:00:00", 1)
       (diskIo.writeByNameToDisk _).expects("truckByProject", o, "truckByProject0").once()
       (diskIo.copyToOutputFolder _).expects(*).anyNumberOfTimes()
       (repo.changes _).when().returning(Seq(change)).once()
       (repo.branchNames _).when().returning(Seq("master")).once()
-      (repo.repoFullPath _).when().returning("/home/git/repoName").once() // TODO missing
+      (repo.repoFullPath _).when().returning("/home/git/r/repoName").once() // TODO missing
 
       When("write")
       new ReportGenerator(repos).writeTruckByRepo(0, repos.flatMap(_.changes), 10, 1, diskIo)
@@ -326,15 +327,18 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory 
       (changeB.repoName _).when().returning("repoName").once()
       (changeB.repoFullPath _).when().returning("/home/git/b/repoName").anyNumberOfTimes()
 
-      val visRepoA = VisibleRepo("repoName", "/home/git/a/repoName", Seq(changeA), Seq("master"), 1, 2, true)
-      val visRepoB = VisibleRepo("repoName", "/home/git/b/repoName", Seq(changeB), Seq("develop"), 1, 2, true)
+      val visRepoA = newRepo("a", changeA, "master")
+      val visRepoB = newRepo("b", changeB, "develop")
       val o = Segmented(Seq(Slot(Seq(visRepoA)), Slot(Seq(visRepoB)), Slot(Nil)), "1970-01-01 01:00:00", "1970-01-01 01:00:00", 1)
       (diskIo.writeByNameToDisk _).expects("truckByProject", o, "truckByProject0").once()
       (diskIo.copyToOutputFolder _).expects(*).anyNumberOfTimes()
 
       val repoA = stub[VisibleRepoT]
+      (repoA.participationPercentages _).when().returning(Nil).once()
       val repoB = stub[VisibleRepoT]
+      (repoB.participationPercentages _).when().returning(Nil).once()
       val repos = Seq(repoA, repoB)
+
       (repoA.changes _).when().returning(Seq(changeA)).once()
       (repoA.branchNames _).when().returning(Seq("master")).once()
       (repoA.repoFullPath _).when().returning("/home/git/a/repoName").anyNumberOfTimes()
@@ -348,6 +352,10 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory 
 
       Then("check")
     }
+  }
+
+  def newRepo(folderPart: String, change: VisibleChangeT, branchName: String) = {
+    VisibleRepo("repoName", "/home/git/" + folderPart + "/repoName", Seq(change), Seq(branchName), 1, Nil, 2, true)
   }
 
 }

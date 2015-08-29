@@ -10,7 +10,7 @@ class ChangeTypesSpec extends FeatureSpec with GivenWhenThen {
       val changes = Nil
 
       When("to repo")
-      val repo = VisibleRepo("test", "/home/git/test", changes, Nil, 1)
+      val repo = VisibleRepo("test", "/home/git/test", changes, Nil, 1, Nil)
 
       Then("check")
       assert(0 == repo.changesPerDay)
@@ -22,7 +22,7 @@ class ChangeTypesSpec extends FeatureSpec with GivenWhenThen {
       val changes = Seq(newVisChange("e"))
 
       When("to repo")
-      val repo = VisibleRepo("test", "/home/git/test", changes, Nil, 1)
+      val repo = VisibleRepo("test", "/home/git/test", changes, Nil, 1, Nil)
 
       Then("check")
       assert(1 == repo.changesPerDay)
@@ -34,7 +34,7 @@ class ChangeTypesSpec extends FeatureSpec with GivenWhenThen {
       val changes = Seq(newVisChange("e"), newVisChange("e"))
 
       When("to repo")
-      val repo = VisibleRepo("test", "/home/git/test", changes, Nil, 1)
+      val repo = VisibleRepo("test", "/home/git/test", changes, Nil, 1, Nil)
 
       Then("check")
       assert(2 == repo.changesPerDay)
@@ -46,7 +46,7 @@ class ChangeTypesSpec extends FeatureSpec with GivenWhenThen {
       val changes = Seq(newVisChange("e"), newVisChange("e"), newVisChange("a"))
 
       When("to repo")
-      val repo = VisibleRepo("test", "/home/git/test", changes, Nil, 1)
+      val repo = VisibleRepo("test", "/home/git/test", changes, Nil, 1, Nil)
 
       Then("check")
       assert(2 == repo.mainComitters)
@@ -59,7 +59,7 @@ class ChangeTypesSpec extends FeatureSpec with GivenWhenThen {
         Seq.fill(29)(newVisChange("c")) ++ Seq.fill(55)(newVisChange("d"))
 
       When("to repo")
-      val repo = VisibleRepo("test", "/home/git/test", changes, Nil, 7)
+      val repo = VisibleRepo("test", "/home/git/test", changes, Nil, 7, Nil)
 
       Then("check")
       assert(2.7 == repo.changesPerDay)

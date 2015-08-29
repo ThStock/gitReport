@@ -56,6 +56,7 @@
     margin: 1em 0 1em 0;
     display: block;
     padding: 0 .5em 0 .5em;
+    position: relative;
   }
   .repo.repo-high.repo-66 {
     border-color: rgba(42, 161, 152, 0.5);
@@ -161,6 +162,11 @@
     padding: 1em;
     color: #2aa198;
   }
+  .participation-graph {
+    z-index: -1;
+    position: absolute;
+    top: 0;
+  }
 </style>
 </head>
 
@@ -206,6 +212,14 @@
                     {{/members}}
                     </div>
             </div>
+          </div>
+          <div class="participation-graph">
+             <!-- only chrome -->
+             <svg class="bars" width="100%" height="40">
+                {{#participationBars}}
+                  <rect width="{{{width}}}%" height="{{{height}}}%" x="{{{x}}}%" fill="#073642"></rect>
+                {{/participationBars}}
+             </svg>
           </div>
         </div>
       {{/repos}}

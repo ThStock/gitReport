@@ -4,7 +4,7 @@ object ChangeTypes {
 
   trait VisibleChangeT {
     def author: Contributor
-    val commitTime: Int
+    val commitTimeMillis: Long
     def repoName: String
     def repoFullPath: String
     def changeStatus(): VisibleChangeStatus
@@ -14,7 +14,7 @@ object ChangeTypes {
   }
   case class VisibleChange(author: Contributor,
                            contributors: Seq[Contributor],
-                           commitTime: Int,
+                           commitTimeMillis: Long,
                            repoName: String,
                            repoFullPath: String,
                            highlightPersonalExchange: Boolean) extends VisibleChangeT {
@@ -26,20 +26,20 @@ object ChangeTypes {
       review.contains(author.email)
     }
 
-    def color = changeStatus match {
+    def color = changeStatus() match {
       case VisibleChangeStatus.warn => "warn"
       case VisibleChangeStatus.ok => "ok"
       case _ => "warn"
     }
 
-    private def formatDate(date: Int) = ReportGenerator.formatedDateBySecs(date)
+    private def formatDate(date: Long) = ReportGenerator.formatedDateByMillis(date)
 
     val title = """|
                   |Time: %s
                   |Repo: %s
-                  | """.stripMargin.trim.format(formatDate(commitTime), repoName)
+                  | """.stripMargin.trim.format(formatDate(commitTimeMillis), repoName)
 
-    def changeStatus = members match {
+    def changeStatus() = members match {
       case c if c.size == 1 => VisibleChangeStatus.warn
       case c if authorIsContributor(author)(c) => VisibleChangeStatus.warn
       case c if c.size >= 2 => VisibleChangeStatus.ok
@@ -87,18 +87,23 @@ object ChangeTypes {
 
   }
 
+  case class ParticipationBar(width:Int, height:Int, x:Int)
+
   trait VisibleRepoT {
     def changes: Seq[VisibleChangeT]
     def repoName: String
     def repoFullPath: String
     def branchNames: Seq[String]
+    def participationBars():Seq[ParticipationBar]
+    def participationPercentages:Seq[Int]
   }
 
   case class VisibleRepo(repoName: String,
-                        repoFullPath: String,
+                         repoFullPath: String,
                          _changes: Seq[VisibleChangeT],
                          branchNames: Seq[String],
                          _sprintLengthInDays: Int,
+                         participationPercentages:Seq[Int],
                          _activity: Int = 0,
                          topComitter: Boolean = false) extends VisibleRepoT {
     repoFullPath.getClass // XXX null check
@@ -107,6 +112,12 @@ object ChangeTypes {
       case i if i > 1 => "high"
       case i if i < 1 => "low"
       case _ => "normal"
+    }
+
+    def participationBars() = {
+      val xshift = 7
+      Seq.tabulate(14)(i ⇒ ParticipationBar(width = 5, height = 100, x = 100 -xshift - xshift * i))
+        .zip(participationPercentages).map(in ⇒ in._1.copy(height = in._2))
     }
 
     val allChangesCount: Int = _changes.size

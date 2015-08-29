@@ -17,7 +17,7 @@ import org.eclipse.jgit.storage.file._
 import scala.collection.JavaConversions._
 import scala.collection.parallel.ParSeq
 
-class RepoAnalyzer(repo: File, commitLimitDays: Long) {
+class RepoAnalyzer(repo: File, commitLimitMillis: Long) {
 
   private val repository: Repository = new FileRepositoryBuilder() //
     .setGitDir(repo) //
@@ -67,12 +67,12 @@ class RepoAnalyzer(repo: File, commitLimitDays: Long) {
                  authIden.getName,
                  commit.getFullMessage,
                  commit.getId.abbreviate(7).name,
-                 commit.getCommitTime,
+                 commit.getCommitTime * 1000L,
                  footerElements,
                  config.highlightPersonalExchange))
   }
 
-  def changes(): Seq[Change] = {
+  def changes(participationBarCount:Int): Seq[Change] = {
     def logSkipMessage(msg:String) = {
       System.err.println("W: skipping " + repo.getAbsolutePath + " " + msg)
     }
@@ -84,7 +84,7 @@ class RepoAnalyzer(repo: File, commitLimitDays: Long) {
       } else {
         val now = System.currentTimeMillis()
 
-        val timeFilter = CommitTimeRevFilter.between(now - 86400000L * commitLimitDays, now)
+        val timeFilter = CommitTimeRevFilter.between(now - 86400000L * (commitLimitMillis * participationBarCount), now)
         implicit def connectionResource[A <: RevWalk] = new Resource[A] {
           override def close(r: A) = r.dispose()
           override def closeAfterException(r: A, t: Throwable): Unit = {
@@ -96,17 +96,17 @@ class RepoAnalyzer(repo: File, commitLimitDays: Long) {
         val conf = RepoConfig(ConfigFactory.parseFile(configFile))
         def toChangeFn(commit: RevCommit) = toChange(conf, commit)
         managed(new RevWalk(git.getRepository)).map{ walk:RevWalk =>
-          walk.setRevFilter(AndRevFilter.create(RevFilter.NO_MERGES, timeFilter))
-          val root = walk.parseCommit(headId)
-          walk.markStart(root)
-          def changesOfWalk(): Seq[RevCommit] = {
-            val change = walk.next()
-            if (change != null) {
-              Seq(change) ++ changesOfWalk()
-            } else {
-              Nil
-            }
+        walk.setRevFilter(AndRevFilter.create(RevFilter.NO_MERGES, timeFilter))
+        val root = walk.parseCommit(headId)
+        walk.markStart(root)
+        def changesOfWalk(): Seq[RevCommit] = {
+          val change = walk.next()
+          if (change != null) {
+            Seq(change) ++ changesOfWalk()
+          } else {
+            Nil
           }
+        }
           changesOfWalk().flatMap(toChangeFn)
         }.opt.orElse(Some(Nil)).get
       }
@@ -122,17 +122,43 @@ class RepoAnalyzer(repo: File, commitLimitDays: Long) {
 object RepoAnalyzer {
 
   def aggregate(repoDirs: Seq[File], commitLimitDays: Int): Seq[VisibleRepo] = {
+
+    val commitLimitMillis = 86400000L * commitLimitDays
     repoDirs.par.map { repo =>
       println("Scanning:   " + repo)
-      val analy = new RepoAnalyzer(repo, commitLimitDays)
-      val allChanges: Seq[Change] = analy.changes()
-      val authorsToEmails: Map[String, String] = allChanges //
+      val participationBarCount = 19
+      val analy = new RepoAnalyzer(repo, commitLimitMillis)
+      val allChanges: Seq[Change] = analy.changes(participationBarCount)
+      val barPercentages = calcParticipationPercentages(allChanges.map(_.commitTimeMillis), participationBarCount, //
+        commitLimitMillis, System.currentTimeMillis())
+      val now = System.currentTimeMillis()
+      val relevantChanges = allChanges.filter(c ⇒ c.commitTimeMillis >= now - commitLimitMillis)
+      val authorsToEmails: Map[String, String] = relevantChanges //
         .map(c => (c.authorName, c.authorEmail)).foldLeft(Map[String, String]())(_ + _)
 
-      val result: Seq[VisibleChange] = allChanges.map(toVisChange(analy.toName(), analy.absolutPath(), authorsToEmails))
-      new VisibleRepo(analy.name(), analy.toFolder(repo).getAbsolutePath, result, analy.branchNames(), commitLimitDays)
+      val result: Seq[VisibleChange] = relevantChanges.map(toVisChange(analy.toName(), analy.absolutPath(), authorsToEmails))
+
+      new VisibleRepo(
+        repoName = analy.name(),
+        repoFullPath = analy.toFolder(repo).getAbsolutePath,
+        _changes = result,
+        branchNames = analy.branchNames(),
+        _sprintLengthInDays = commitLimitDays,
+        participationPercentages = barPercentages)
     }.seq
 
+  }
+
+  def calcParticipationPercentages(timeStampsOfAllCommits: Seq[Long], barCount: Int, windowMillis: Long, nowMillis:Long): Seq[Int] = {
+    val x = nowMillis / windowMillis
+    val groupedTimesByWindow = timeStampsOfAllCommits.groupBy(in ⇒ ((in / windowMillis) - x).abs).map(in ⇒ (in._1, in._2.size))
+    val maxCommitsPerWindow = if (groupedTimesByWindow.isEmpty) {
+      0
+    } else {
+      groupedTimesByWindow.values.max
+    }
+    val percentages = groupedTimesByWindow.map(in ⇒ (in._1, (in._2.toDouble / maxCommitsPerWindow) * 100d))
+    Seq.tabulate(barCount)(i ⇒ percentages.getOrElse(i, 0d).toInt)
   }
 
   def toVisChange(repoName: String, absolutRepoPath: String, authorsToEmails: Map[String, String]) //
@@ -159,12 +185,12 @@ object RepoAnalyzer {
 
       VisibleChange(signerAuthor, (Seq(author.copy(_typ = Contributor.REVIWER, email = author.email.toLowerCase)) ++
         reviewers).filterNot(noSigner) ++
-        signersWithoutFirst, change.commitTime, repoName, absolutRepoPath, change.highlightPersonalExchange)
+        signersWithoutFirst, change.commitTimeMillis, repoName, absolutRepoPath, change.highlightPersonalExchange)
 
     } else {
       VisibleChange(author.copy(email = author.email.toLowerCase),
                      reviewers ++ signers,
-                     change.commitTime,
+                     change.commitTimeMillis,
                      repoName,
                      absolutRepoPath,
                      change.highlightPersonalExchange)
@@ -180,7 +206,7 @@ object RepoAnalyzer {
       }
       VisibleChange(Contributor("some@example.org", Contributor.AUTHOR), //
                      visChange.contributors.map(_.copy(email = reviewer)), //
-                     visChange.commitTime, visChange.repoName, visChange.repoFullPath, change.highlightPersonalExchange)
+                     visChange.commitTimeMillis, visChange.repoName, visChange.repoFullPath, change.highlightPersonalExchange)
     }
   }
 
@@ -245,7 +271,7 @@ object RepoAnalyzer {
                     authorName: String,
                     commitMsg: String,
                     id: String,
-                    commitTime: Int,
+                    commitTimeMillis: Long,
                     footer: Seq[FooterElement] = Nil,
                     highlightPersonalExchange: Boolean = false)
 
