@@ -4,15 +4,15 @@ import java.nio.file.Files
 
 import ChangeTypes.{Contributor, ContributorType, VisibleChange, VisibleRepo}
 import RepoAnalyzer._
-import resource._
 import com.typesafe.config.{ConfigException, ConfigFactory}
 import org.eclipse.jgit.api._
 import org.eclipse.jgit.api.errors.NoHeadException
-import org.eclipse.jgit.errors.{MissingObjectException, RevWalkException}
+import org.eclipse.jgit.errors.MissingObjectException
 import org.eclipse.jgit.lib._
 import org.eclipse.jgit.revwalk._
 import org.eclipse.jgit.revwalk.filter.{AndRevFilter, CommitTimeRevFilter, RevFilter}
 import org.eclipse.jgit.storage.file._
+import resource._
 
 import scala.collection.JavaConversions._
 import scala.collection.parallel.ParSeq
@@ -94,19 +94,21 @@ class RepoAnalyzer(repo: File, commitLimitMillis: Long) {
         }
         val configFile = new File(repo.getParentFile.getAbsoluteFile, ".git-report.conf")
         val conf = RepoConfig(ConfigFactory.parseFile(configFile))
+
         def toChangeFn(commit: RevCommit) = toChange(conf, commit)
-        managed(new RevWalk(git.getRepository)).map{ walk:RevWalk =>
-        walk.setRevFilter(AndRevFilter.create(RevFilter.NO_MERGES, timeFilter))
-        val root = walk.parseCommit(headId)
-        walk.markStart(root)
-        def changesOfWalk(): Seq[RevCommit] = {
-          val change = walk.next()
-          if (change != null) {
-            Seq(change) ++ changesOfWalk()
-          } else {
-            Nil
+
+        resource.managed(new RevWalk(git.getRepository)).map { walk: RevWalk =>
+          walk.setRevFilter(AndRevFilter.create(RevFilter.NO_MERGES, timeFilter))
+          val root = walk.parseCommit(headId)
+          walk.markStart(root)
+          def changesOfWalk(): Seq[RevCommit] = {
+            val change = walk.next()
+            if (change != null) {
+              Seq(change) ++ changesOfWalk()
+            } else {
+              Nil
+            }
           }
-        }
           changesOfWalk().flatMap(toChangeFn)
         }.opt.orElse(Some(Nil)).get
       }

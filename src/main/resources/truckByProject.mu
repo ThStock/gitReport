@@ -166,6 +166,7 @@
     z-index: -1;
     position: absolute;
     top: 0;
+    width: 250px;
   }
 </style>
 </head>
@@ -214,7 +215,7 @@
             </div>
           </div>
           <div class="participation-graph">
-             <!-- only chrome -->
+             <!-- chrome and firefox handles this diffrend -->
              <svg class="bars" width="100%" height="40">
                 {{#participationBars}}
                   <rect width="{{{width}}}%" height="{{{height}}}%" x="{{{x}}}%" fill="#073642"></rect>
