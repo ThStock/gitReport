@@ -291,7 +291,7 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory 
       val author = Contributor("q@example.org", Contributor.AUTHOR)
       (change.members _).when().returning(Seq(author)).repeat(6)
       (change.contributors _).when().returning(Seq(author)).repeat(12)
-      (change.author _).when().returning(author).repeat(6)
+      (change.author _).when().returning(author).repeat(9)
       (change.repoName _).when().returning("repoName").once()
       (change.repoFullPath _).when().returning("/home/git/r/repoName").twice()
 

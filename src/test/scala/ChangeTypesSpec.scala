@@ -53,17 +53,17 @@ class ChangeTypesSpec extends FeatureSpec with GivenWhenThen {
       assert(1.5 == repo.changesPerDay)
     }
 
-    scenario("changesPerDay - 2.66") {
+    scenario("changesPerDay - 2.8") {
       Given("changes")
       val changes = Seq.fill(1)(newVisChange("a")) ++ Seq.fill(2)(newVisChange("b")) ++
-        Seq.fill(29)(newVisChange("c")) ++ Seq.fill(55)(newVisChange("d"))
+        Seq.fill(31)(newVisChange("c")) ++ Seq.fill(55)(newVisChange("d"))
 
       When("to repo")
       val repo = VisibleRepo("test", "/home/git/test", changes, Nil, 7, Nil)
 
       Then("check")
-      assert(2.7 == repo.changesPerDay)
       assert(2 == repo.mainComitters)
+      assert(2.8 == repo.changesPerDay)
     }
 
   }
