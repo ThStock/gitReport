@@ -61,7 +61,7 @@ object ChangeTypes {
   case class Contributor(email: String,
                          _typ: ContributorType,
                          activity: Contributor.ContributorActivity = ContributorActivity.LOWEST,
-                         noGerrit: Boolean = false) {
+                         noGerrit: Boolean = false, isMainComitter: Boolean = false) {
     val hash = RepoAnalyzer.md5(email)
     val isAuthor = _typ.isAuthor
     val activityValue = activity.key
@@ -144,8 +144,11 @@ object ChangeTypes {
     val changes = _changes
 
     val members: Seq[Contributor] = VisibleRepo.toContibutors(changes).map(_.copy(noGerrit = this.noGerrit))
+      .map(applyMainCommiter)
 
-    private val changeCountsByAuthor = _changes.groupBy(_.author).toSeq.map(_._2.size)
+    private def changesByAuthor = _changes.groupBy(_.author).toSeq
+
+    private def changeCountsByAuthor = changesByAuthor.map(_._2.size)
 
     val changesPerDay: Double = {
       if (changes.exists(_.highlightPersonalExchange)) {
@@ -162,16 +165,27 @@ object ChangeTypes {
       }
     }
 
+    private lazy val mainCommiterMembers:Seq[Contributor] = {
+      val devs = changeCountsByAuthor.map(score => Math.pow(score - changesPerDay, 2))
+      val stddev = Math.sqrt(devs.sum / devs.size)
+      changesByAuthor.filter(_._2.size >= stddev.toInt).map(_._1)
+    }
+
     val mainComitters: Int = {
       if (changes.exists(_.highlightPersonalExchange)) {
-        val devs = changeCountsByAuthor.map(score => Math.pow(score - changesPerDay, 2))
-        val stddev = Math.sqrt(devs.sum / devs.size)
-        changeCountsByAuthor.count(_ >= stddev.toInt)
+        mainCommiterMembers.size
       } else {
         0
       }
     }
 
+    private def applyMainCommiter(contributor: Contributor) = {
+      if (mainCommiterMembers.map(_.email).contains(contributor.email)) {
+        contributor.copy(isMainComitter = true)
+      } else {
+        contributor
+      }
+    }
   }
 
   object VisibleRepo {

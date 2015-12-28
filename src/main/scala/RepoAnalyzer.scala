@@ -153,7 +153,8 @@ object RepoAnalyzer {
 
   def calcParticipationPercentages(timeStampsOfAllCommits: Seq[Long], barCount: Int, windowMillis: Long, nowMillis:Long): Seq[Int] = {
     val x = nowMillis / windowMillis
-    val groupedTimesByWindow = timeStampsOfAllCommits.groupBy(in ⇒ ((in / windowMillis) - x).abs).map(in ⇒ (in._1, in._2.size))
+    val groupedTimesByWindow = timeStampsOfAllCommits.groupBy(in ⇒ ((in / windowMillis) - x).abs)
+      .map(in ⇒ (in._1, in._2.size))
     val maxCommitsPerWindow = if (groupedTimesByWindow.isEmpty) {
       0
     } else {

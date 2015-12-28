@@ -81,7 +81,11 @@ class ReportGenerator(repos: Seq[VisibleRepoT]) {
         })
 
         val segments = ReportGenerator.slidingsOf(3) {
-          markedTopComitter.sortBy(_.repoName).sortBy(_.allChangesCount).reverse.sortWith(_.percentageOk > _.percentageOk)
+          markedTopComitter
+            .sortBy(_.repoName)
+            .sortBy(_.allChangesCount)
+            .reverse
+            .sortWith(_.percentageOk > _.percentageOk)
         }
 
         val segemnts = Segmented(slots = Seq(Slot(segments(0)), Slot(segments(1)), Slot(segments(2))),

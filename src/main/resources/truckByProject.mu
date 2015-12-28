@@ -68,13 +68,25 @@
     margin-top: .6em;
     margin-bottom: .6em;
   }
+  .contributor {
+    display:inline-block;
+    height: 35px;
+    width: 35px;
+    padding: 0;
+    margin: 0;
+    margin-bottom: 3px;
+    margin-right: 3px;
+    border-radius: 3px;
+  }
+  .contributor.main {
+    border-bottom: 2px solid #073642;
+  }
   .contributor img {
     border-radius:3px;
     border: 0px solid #073642;
     height: 30px;
     width: 30px;
     margin: 0;
-    margin-bottom: .6em;
     padding: 0;
     position: relative;
     -webkit-transition: all .2s ease-in-out; /* Safari and Chrome */
@@ -115,6 +127,8 @@
   .members {
     margin-right: .5em;
     margin-left: .5em;
+    margin-top: .3em;
+    padding-bottom: .2em;
   }
   .octicon {
     font-size: 32px !important;
@@ -167,6 +181,10 @@
     position: absolute;
     top: 0;
     width: 250px;
+    left: 16px;
+  }
+  #key-help {
+    size: 130%;
   }
 </style>
 </head>
@@ -206,11 +224,11 @@
           <div class="row">
             <div class="col-xs-12">
             <div class="members">
-                    {{#members}}
-                      <span class="contributor {{{activityValue}}}{{#noGerrit}} no-gerrit-contrib{{/noGerrit}}" >
+                    {{#members}}<!--
+                      --!><div class="contributor {{{activityValue}}}{{#noGerrit}} no-gerrit-contrib{{/noGerrit}}{{#isMainComitter}} main{{/isMainComitter}}" >
                         <img src="https://lb.gravatar.com/avatar/{{{hash}}}?s=160&amp;d=identicon" title="{{{email}}} - {{{typ}}}" />
-                      </span>
-                    {{/members}}
+                      </div><!--
+                    -->{{/members}}
                     </div>
             </div>
           </div>
@@ -229,7 +247,29 @@
   </div>
 </div>
 <footer>
-  <img src="./git-report.svg" style="width: 3em; opacity: .33;" />
+  <!-- <a href="#" alt="Help" id="key-help">?</a>&nbsp;--><img src="./git-report.svg" style="width: 3em; opacity: .33;" />
 </footer>
+<script>
+// event.type must be keypress
+function getChar(event) {
+  if (event.which == null) {
+    return String.fromCharCode(event.keyCode) // IE
+  } else if (event.which!=0 && event.charCode!=0) {
+    return String.fromCharCode(event.which)   // the rest
+  } else {
+    return null // special key
+  }
+}
+
+document.onkeypress = function(event) {
+  var char = getChar(event || window.event)
+
+  if (!char) return // special key
+
+  alert(char);
+
+  return false
+}
+</script>
 </body>
 </html>
