@@ -64,10 +64,6 @@
   .repo.repo-high.repo-80 {
     border-color: #2aa198;
   }
-  .repo .title {
-    margin-top: .6em;
-    margin-bottom: .6em;
-  }
   .contributor {
     display:inline-block;
     height: 35px;
@@ -130,9 +126,6 @@
     margin-top: .3em;
     padding-bottom: .2em;
   }
-  .octicon {
-    font-size: 32px !important;
-  }
   .activity-low {
     color: #40565e;
   }
@@ -183,6 +176,29 @@
     width: 250px;
     left: 16px;
   }
+  .badges {
+    color: #2aa198;
+    text-align:left;
+    visibility: hidden;
+  }
+  .repo .title {
+    margin-bottom: .6em;
+    padding-top: 2px;
+  }
+  .title-name .title-value {
+    margin-top: 3px;
+  }
+  .title-name .title .octicon {
+    float: left;
+    margin-right: 8px;
+  }
+  .title-name .title .badges .octoicon {
+    font-size: 16px;
+  }
+  .title-name .title .octicon, .title-details .octicon {
+    font-size: 32px;
+    margin-top: 6px;
+  }
   #key-help {
     size: 130%;
   }
@@ -206,7 +222,23 @@
         {{#percentageOkGt80}}repo-80{{/percentageOkGt80}}">
           <div class="row title">
             <div class="col-xs-6 title-name">
-              <span class="octicon octicon-repo"></span> {{{repoName}}}
+              <span class="title"><span class="octicon octicon-repo"></span></span>
+              <span class="badges">
+                <span class="octicon octicon-circuit-board"></span>
+                <span class="octicon octicon-gist-secret" style="color: #dc322f;"></span>
+                <span class="octicon octicon-database"></span>
+                <span class="octicon octicon-bookmark" title="Badge description"></span>
+                <!--
+                <span class="octicon octicon-dashboard"></span>
+                <span class="octicon octicon-beaker"></span>
+                <span class="octicon octicon-organization"></span>
+                <span class="octicon octicon-rocket"></span>
+                <span class="octicon octicon-squirrel" style="color: #b58900" title="Commit leader for 3 Sprints"></span>
+                <span class="octicon octicon-paintcan"></span>
+                <span class="octicon octicon-light-bulb" style="color: #b58900" title="New in current Sprint"></span>
+                -->
+              </span><br />
+              <span class="title-value">{{{repoName}}}</span>
             </div>
             <div class="col-xs-6 title-details">
                     <span class="activity-{{{activityIndex}}}"><span class="octicon octicon-pulse"></span> <span title="with / without review">{{^noGerrit}}{{{okChangesCount}}}/{{/noGerrit}}{{{allChangesCount}}}</span>
@@ -226,7 +258,7 @@
             <div class="members">
                     {{#members}}<!--
                       --!><div class="contributor {{{activityValue}}}{{#noGerrit}} no-gerrit-contrib{{/noGerrit}}{{#isMainComitter}} main{{/isMainComitter}}" >
-                        <img src="https://lb.gravatar.com/avatar/{{{hash}}}?s=160&amp;d=identicon" title="{{{email}}} - {{{typ}}}" />
+                        <img src="https://lb.gravatar.com/avatar/{{{hash}}}?s=160&amp;d=identicon" title="{{{email}}} - {{{typ}}} - {{{activityReason}}}" />
                       </div><!--
                     -->{{/members}}
                     </div>

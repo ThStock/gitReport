@@ -65,6 +65,7 @@ object ChangeTypes {
     val hash = RepoAnalyzer.md5(email)
     val isAuthor = _typ.isAuthor
     val activityValue = activity.key
+    val activityReason = activity.reason
     val typ: String = _typ.name
 
     def copyAsAuthor() = copy(_typ = Contributor.AUTHOR)
@@ -75,14 +76,21 @@ object ChangeTypes {
     val AUTHOR: ContributorType = ContributorType("author")
     val REVIWER = ContributorType("Code-Review")
 
-    case class ContributorActivity(key: String)
+    case class ContributorActivity(key: String, _reason:String = "") {
+      def reason = _reason
+    }
 
     object ContributorActivity {
       val LOWEST = ContributorActivity("lowest")
+        .copy(_reason = "almost no exchange")
       val LOW = ContributorActivity("low")
+        .copy(_reason = "low exchange or direct commit")
       val MID = ContributorActivity("mid")
+        .copy(_reason = "medium review rate")
       val HIGH = ContributorActivity("high")
+        .copy(_reason = "")
       val HIGHEST = ContributorActivity("highest")
+        .copy(_reason = "maximum")
     }
 
   }
@@ -224,14 +232,15 @@ object ChangeTypes {
           val repoHasMoreThenOneMember = membersSimpyfied.toSet.size > 1
           val repoHasMoreThenOneContributors = contributorsSimpyfied.toSet.size > 1
 
-          val exchangeWithHalfOfTeam = allMembersEmails.size.toDouble / membersSimpyfied.toSet.size.toDouble < 2
+          val exchangeWithTeam = allMembersEmails.size.toDouble / membersSimpyfied.toSet.size.toDouble
+          val exchangeWithHalfOfTeam = exchangeWithTeam < 2
 
           if (allMembersEmails.size > 1 && exchangeWithHalfOfTeam && selfReviewsVsChanges < 0.1d && isNoDirectCommit) {
             ContributorActivity.HIGHEST
           } else if (allMembersEmails.size > 1 && selfReviewsVsChanges < 0.2d && isNoDirectCommit) {
             ContributorActivity.HIGH
           } else if (allMembersEmails.size == 1) {
-            ContributorActivity.MID
+            ContributorActivity.MID.copy(_reason = "only one player")
           } else if (repoHasMoreThenOneMember && selfReviewsVsChanges < 0.4d && isNoDirectCommit) {
             ContributorActivity.MID
           } else if (repoHasMoreThenOneContributors && selfReviewsVsChanges < 0.8d) {
@@ -242,10 +251,10 @@ object ChangeTypes {
         }
       }
 
-      allMembers.map(in => in.copy(_typ = ContributorType("player")))
-        .toSet[Contributor]
-        .map(in => in.copy(activity = selectActivity(in)))
-        .toSeq
+      allMembers
+        .map(member => member.copy(_typ = ContributorType("player")))
+        .distinct
+        .map(member => member.copy(activity = selectActivity(member)))
         .sortWith(_.email < _.email)
     }
 

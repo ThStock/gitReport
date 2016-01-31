@@ -33,7 +33,7 @@ class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
       val result: Seq[Contributor] = VisibleRepo.toContibutors(changes)
 
       Then("check")
-      assertResult(Seq(typCopy(c0q, ContributorActivity.MID)))(result)
+      assertResult(Seq(typCopy(c0q, ContributorActivity.MID.copy(_reason = "only one player"))))(result)
     }
 
     scenario("1 change with 2 players") {
@@ -44,7 +44,8 @@ class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
       val result: Seq[Contributor] = VisibleRepo.toContibutors(changes)
 
       Then("check")
-      assertResult(Seq(typCopy(c1a, ContributorActivity.HIGH), typCopy(c0q, ContributorActivity.MID)))(result)
+      assertResult(Seq(typCopy(c1a, ContributorActivity.HIGH),
+        typCopy(c0q, ContributorActivity.MID.copy(_reason = "only one player"))))(result)
     }
 
     scenario("1 change with 2 players both author") {
@@ -66,7 +67,7 @@ class VisibleRepoSpec extends FeatureSpec with GivenWhenThen {
       val result: Seq[Contributor] = VisibleRepo.toContibutors(changes)
 
       Then("check")
-      assertResult(Seq(typCopy(c0q, ContributorActivity.MID)))(result)
+      assertResult(Seq(typCopy(c0q, ContributorActivity.MID.copy(_reason = "only one player"))))(result)
     }
 
     scenario("2 changes 2 player with 0, 1 interaction") {
