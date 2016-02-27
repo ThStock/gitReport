@@ -17,7 +17,7 @@ import resource._
 import scala.collection.JavaConversions._
 import scala.collection.parallel.ParSeq
 
-class RepoAnalyzer(repo: File, commitLimitMillis: Long) {
+class RepoAnalyzer(repo: File) {
 
   private val repository: Repository = new FileRepositoryBuilder() //
     .setGitDir(repo) //
@@ -72,7 +72,7 @@ class RepoAnalyzer(repo: File, commitLimitMillis: Long) {
                  config.highlightPersonalExchange))
   }
 
-  def changes(participationBarCount:Int): Seq[Change] = {
+  def changes(participationBarCount:Int, commitLimitMillis: Long): Seq[Change] = {
     def logSkipMessage(msg:String) = {
       System.err.println("W: skipping " + repo.getAbsolutePath + " " + msg)
     }
@@ -129,10 +129,12 @@ object RepoAnalyzer {
     repoDirs.par.map { repo =>
       println("Scanning:   " + repo)
       val participationBarCount = 19
-      val analy = new RepoAnalyzer(repo, commitLimitMillis)
-      val allChanges: Seq[Change] = analy.changes(participationBarCount)
+      val analy = new RepoAnalyzer(repo)
+      val allChanges: Seq[Change] = analy.changes(participationBarCount, commitLimitMillis * 3)
+
       val barPercentages = calcParticipationPercentages(allChanges.map(_.commitTimeMillis), participationBarCount, //
         commitLimitMillis, System.currentTimeMillis())
+
       val now = System.currentTimeMillis()
       val relevantChanges = allChanges.filter(c ⇒ c.commitTimeMillis >= now - commitLimitMillis)
       val authorsToEmails: Map[String, String] = relevantChanges //
@@ -152,16 +154,26 @@ object RepoAnalyzer {
   }
 
   def calcParticipationPercentages(timeStampsOfAllCommits: Seq[Long], barCount: Int, windowMillis: Long, nowMillis:Long): Seq[Int] = {
-    val x = nowMillis / windowMillis
-    val groupedTimesByWindow = timeStampsOfAllCommits.groupBy(in ⇒ ((in / windowMillis) - x).abs)
+    val blocks = Seq.tabulate(barCount)(c ⇒ nowMillis - windowMillis * c)
+    def selectBlock(long: Long):Long = {
+      val b = blocks.filter( b ⇒ long <= b ).last
+      blocks.size - blocks.indexOf(b) - 1
+    }
+    val filtered = timeStampsOfAllCommits
+      .filter(_ > nowMillis - windowMillis * barCount)
+      .filter(_ <= nowMillis)
+    val groupedTimesByWindow = filtered
+      .groupBy(in ⇒ selectBlock(in))
       .map(in ⇒ (in._1, in._2.size))
+
     val maxCommitsPerWindow = if (groupedTimesByWindow.isEmpty) {
       0
     } else {
       groupedTimesByWindow.values.max
     }
     val percentages = groupedTimesByWindow.map(in ⇒ (in._1, (in._2.toDouble / maxCommitsPerWindow) * 100d))
-    Seq.tabulate(barCount)(i ⇒ percentages.getOrElse(i, 0d).toInt)
+    val result = Seq.tabulate(barCount)(i ⇒ percentages.getOrElse(i, 0d).toInt)
+    result
   }
 
   def toVisChange(repoName: String, absolutRepoPath: String, authorsToEmails: Map[String, String]) //

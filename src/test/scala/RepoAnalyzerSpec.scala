@@ -18,7 +18,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
     scenario("single") {
       Given("a")
       When("calc")
-      val result: Seq[Int] = RepoAnalyzer.calcParticipationPercentages(Seq(1), 1, 100, 0)
+      val result: Seq[Int] = RepoAnalyzer.calcParticipationPercentages(Seq(1), 1, 100, 1)
 
       Then("calculated")
       assert(result == Seq(100))
@@ -27,7 +27,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
     scenario("1 of 4") {
       Given("a")
       When("calc")
-      val result: Seq[Int] = RepoAnalyzer.calcParticipationPercentages(Seq(1), 4, 100, 0)
+      val result: Seq[Int] = RepoAnalyzer.calcParticipationPercentages(Seq(1), 4, 100, 400)
 
       Then("calculated")
       assert(result == Seq(100, 0, 0, 0))
@@ -39,16 +39,52 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       val result: Seq[Int] = RepoAnalyzer.calcParticipationPercentages(Seq(210, 250), 6, 100, 534)
 
       Then("calculated")
-      assert(result == Seq(0, 0, 0, 100, 0, 0))
+      assert(result == Seq(0, 0, 100, 100, 0, 0))
     }
 
     scenario("3 of 2") {
       Given("a")
       When("calc")
-      val result: Seq[Int] = RepoAnalyzer.calcParticipationPercentages(Seq(1, 50, 110), 2, 100, 0)
+      val result: Seq[Int] = RepoAnalyzer.calcParticipationPercentages(Seq(1, 50, 110), 2, 100, 110)
 
       Then("calculated")
-      assert(result == Seq(100, 50))
+      assert(result == Seq(50, 100))
+    }
+
+    scenario("3 of 4; 4") {
+      Given("a")
+      When("calc")
+      val result: Seq[Int] = RepoAnalyzer.calcParticipationPercentages(Seq(1, 2, 2, 3, 3, 3, 4, 4, 4, 4), 3, 1, 4)
+
+      Then("calculated")
+      assert(result == Seq(50, 75, 100))
+    }
+
+    scenario("3 of 4; 5") {
+      Given("a")
+      When("calc")
+      val result: Seq[Int] = RepoAnalyzer.calcParticipationPercentages(Seq(1, 2, 2, 3, 3, 3, 4, 4, 4, 4), 3, 1, 5)
+
+      Then("calculated")
+      assert(result == Seq(75, 100, 0))
+    }
+
+    scenario("3 of 4; 3") {
+      Given("a")
+      When("calc")
+      val result: Seq[Int] = RepoAnalyzer.calcParticipationPercentages(Seq(1, 2, 2, 3, 3, 3, 4, 4, 4, 4), 3, 1, 3)
+
+      Then("calculated")
+      assert(result == Seq(33, 66, 100))
+    }
+
+    scenario("2 of 4; 3") {
+      Given("a")
+      When("calc")
+      val result: Seq[Int] = RepoAnalyzer.calcParticipationPercentages(Seq(1, 2, 2, 3, 3, 3, 4, 4, 4, 4), 2, 1, 3)
+
+      Then("calculated")
+      assert(result == Seq(66, 100))
     }
   }
 

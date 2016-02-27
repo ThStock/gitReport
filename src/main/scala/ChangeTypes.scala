@@ -125,7 +125,7 @@ object ChangeTypes {
     def participationBars() = {
       val xshift = 7
       Seq.tabulate(14)(i ⇒ ParticipationBar(width = 5, height = 100, x = 100 -xshift - xshift * i))
-        .zip(participationPercentages).map(in ⇒ in._1.copy(height = in._2))
+        .zip(participationPercentages.reverse).map(in ⇒ in._1.copy(height = in._2))
     }
 
     val allChangesCount: Int = _changes.size
