@@ -278,6 +278,11 @@ object ChangeTypes {
   }
 
   object VisBadge {
+
+    def moreReviews50(interations:Int, percentage:Int) =
+      VisBadge("dashboard", "low-green", "More then 50%% (%s%%) reviews for over %s iterations".format(percentage, interations))
+
+
     def moreReviews60(interations:Int, percentage:Int) =
       VisBadge("dashboard", "green", "More then 60%% (%s%%) reviews for over %s iterations".format(percentage, interations))
 

@@ -186,6 +186,9 @@
   .badge-color-gold {
       color: #b58900;
   }
+  .badge-color-low-green {
+      color: #40565E;
+  }
   .repo .title {
     margin-bottom: .6em;
     padding-top: 2px;

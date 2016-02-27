@@ -153,6 +153,7 @@ object RepoAnalyzer {
       val badgeReviews: Seq[VisBadge] = reviewsOver match {
         case in: Int if in > 80 ⇒ Seq(VisBadge.moreReviews80(history, reviewsOver))
         case in: Int if in > 60 ⇒ Seq(VisBadge.moreReviews60(history, reviewsOver))
+        case in: Int if in > 50 ⇒ Seq(VisBadge.moreReviews50(history, reviewsOver))
         case _ ⇒ Nil
       }
 
