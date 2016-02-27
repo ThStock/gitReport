@@ -55,12 +55,14 @@ class ReportGenerator(repos: Seq[VisibleRepoT]) {
         val truckByProject: Seq[VisibleRepo] = contentGrouped.toSeq.map { in =>
           val repoFullPath = in._2.map(_.repoFullPath).head.toString
           val repoName = in._2.map(_.repoName).head.toString
+          val r = repoFullPathToRepos.get(repoFullPath).get
           VisibleRepo(repoName = repoName,
                        repoFullPath = repoFullPath,
                        _changes = in._2,
+                        _badges = r.badges,
                        branchNames = branchNamesOf(repoFullPath),
                        _sprintLengthInDays = sprintLengthInDays,
-                       participationPercentages = repoFullPathToRepos.get(repoFullPath).get.participationPercentages,
+                       participationPercentages = r.participationPercentages,
                        _activity = ReportGenerator.repoActivityScoreOf(in._1, contentGrouped).intValue
           )
         }

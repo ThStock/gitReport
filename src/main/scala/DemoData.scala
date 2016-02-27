@@ -1,7 +1,7 @@
 import java.util.Date
 import java.util.concurrent.atomic.AtomicInteger
 
-import ChangeTypes.{Contributor, ContributorType, VisibleChange, VisibleRepo}
+import ChangeTypes._
 
 object DemoData {
 
@@ -48,6 +48,7 @@ object DemoData {
     VisibleRepo(repoName = name + number, repoFullPath = "/home/any/git/" + name + number,
       _changes = _changes.map(_.apply(name + number)).filter(bySprintLenght(sprintLengthInDays)),
       branchNames = Seq.tabulate(number % 3 + 1)(_ + "b"),
+      _badges = Seq(VisBadge.moreReviews80(3, 88)),
       _sprintLengthInDays = sprintLengthInDays, participationPercentages = Seq.tabulate(19)(i => i * 10).reverse
     )
   }

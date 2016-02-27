@@ -285,6 +285,7 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory 
       Given("a")
       val repo = stub[VisibleRepoT]
       (repo.participationPercentages _).when().returning(Nil).once()
+      (repo.badges _).when().returning(Nil).once()
       val repos = Seq(repo)
       val diskIo = mock[ReportGenerator.DiskIoT]
       val change = stub[VisibleChangeT]
@@ -335,8 +336,10 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory 
 
       val repoA = stub[VisibleRepoT]
       (repoA.participationPercentages _).when().returning(Nil).once()
+      (repoA.badges _).when().returning(Nil).once()
       val repoB = stub[VisibleRepoT]
       (repoB.participationPercentages _).when().returning(Nil).once()
+      (repoB.badges _).when().returning(Nil).once()
       val repos = Seq(repoA, repoB)
 
       (repoA.changes _).when().returning(Seq(changeA)).once()
@@ -355,7 +358,7 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory 
   }
 
   def newRepo(folderPart: String, change: VisibleChangeT, branchName: String) = {
-    VisibleRepo("repoName", "/home/git/" + folderPart + "/repoName", Seq(change), Seq(branchName), 1, Nil, 2, true)
+    VisibleRepo("repoName", "/home/git/" + folderPart + "/repoName", Seq(change), Seq(branchName), 1, Nil, Nil, 2, true)
   }
 
 }

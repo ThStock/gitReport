@@ -1,4 +1,8 @@
+import javax.management.MXBean
+
 import ChangeTypes.Contributor.ContributorActivity
+
+import scala.beans.BeanProperty
 
 object ChangeTypes {
 
@@ -104,6 +108,7 @@ object ChangeTypes {
     def branchNames: Seq[String]
     def participationBars():Seq[ParticipationBar]
     def participationPercentages:Seq[Int]
+    def badges:Seq[VisBadge]
   }
 
   case class VisibleRepo(repoName: String,
@@ -112,9 +117,12 @@ object ChangeTypes {
                          branchNames: Seq[String],
                          _sprintLengthInDays: Int,
                          participationPercentages:Seq[Int],
+                         _badges:Seq[VisBadge],
                          _activity: Int = 0,
                          topComitter: Boolean = false) extends VisibleRepoT {
     repoFullPath.getClass // XXX null check
+
+    val badges = _badges
 
     val activityIndex = _activity match {
       case i if i > 1 => "high"
@@ -136,11 +144,10 @@ object ChangeTypes {
 
     val branchCountOk = branchCount <= 2
 
-    val okChangesCount: Int = _changes.count(_.changeStatus == VisibleChangeStatus.ok)
+    val okChangesCount: Int = VisibleRepo.okChanges(_changes)
 
     def percentageOk(): Int = {
-      val result: Double = okChangesCount.toDouble / allChangesCount.toDouble * 100
-      result.toInt
+      VisibleRepo.percentageOk(_changes)
     }
 
     val percentageOkGt66 = percentageOk() > 66
@@ -197,6 +204,16 @@ object ChangeTypes {
   }
 
   object VisibleRepo {
+
+    def okChanges(changes:Seq[VisibleChangeT]) = {
+      changes.count(_.changeStatus == VisibleChangeStatus.ok)
+    }
+
+    def percentageOk(changes:Seq[VisibleChangeT]):Int = {
+      val result: Double = okChanges(changes).toDouble / changes.size.toDouble * 100
+      result.toInt
+    }
+
     def toContibutors(changes: Seq[VisibleChangeT]): Seq[ChangeTypes.Contributor] = {
       object EmailAndTyp {
         def by(contributor: Contributor) = EmailAndTyp(contributor.email, "")
@@ -258,6 +275,20 @@ object ChangeTypes {
         .sortWith(_.email < _.email)
     }
 
+  }
+
+  object VisBadge {
+    def moreReviews60(interations:Int, percentage:Int) =
+      VisBadge("dashboard", "green", "More then 60%% (%s%%) reviews for over %s iterations".format(percentage, interations))
+
+    def moreReviews80(interations:Int, percentage:Int) =
+      VisBadge("dashboard", "gold", "More then 80%% (%s%%) reviews for over %s iterations".format(percentage, interations))
+  }
+
+  case class VisBadge(_key:String, _color:String, _msg:String) {
+    val key = _key
+    val color = _color
+    val msg = _msg
   }
 
 }

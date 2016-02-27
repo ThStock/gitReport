@@ -179,7 +179,12 @@
   .badges {
     color: #2aa198;
     text-align:left;
-    visibility: hidden;
+  }
+  .badge-color-red {
+    color: #dc322f;
+  }
+  .badge-color-gold {
+      color: #b58900;
   }
   .repo .title {
     margin-bottom: .6em;
@@ -224,11 +229,14 @@
             <div class="col-xs-6 title-name">
               <span class="title"><span class="octicon octicon-repo"></span></span>
               <span class="badges">
+                {{#badges}}
+                <span class="octicon octicon-{{key}} badge-color-{{color}}" title="{{msg}}"></span>
+                {{/badges}}
+                <!--
                 <span class="octicon octicon-circuit-board"></span>
                 <span class="octicon octicon-gist-secret" style="color: #dc322f;"></span>
                 <span class="octicon octicon-database"></span>
                 <span class="octicon octicon-bookmark" title="Badge description"></span>
-                <!--
                 <span class="octicon octicon-dashboard"></span>
                 <span class="octicon octicon-beaker"></span>
                 <span class="octicon octicon-organization"></span>

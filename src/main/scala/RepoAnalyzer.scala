@@ -2,7 +2,7 @@ import java.io._
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
-import ChangeTypes.{Contributor, ContributorType, VisibleChange, VisibleRepo}
+import ChangeTypes._
 import RepoAnalyzer._
 import com.typesafe.config.{ConfigException, ConfigFactory}
 import org.eclipse.jgit.api._
@@ -37,7 +37,9 @@ class RepoAnalyzer(repo: File) {
 
   def name(): String = toName()
 
-  def absolutPath(): String = toFolder().getAbsolutePath // TODO TEST
+  def absolutPath(): String = toFolder().getAbsolutePath
+
+  // TODO TEST
   def toName(dir: File = repo): String = toFolder(dir).getName
 
   def toFolder(dir: File = repo): File = dir.getName match {
@@ -64,16 +66,18 @@ class RepoAnalyzer(repo: File) {
     }
 
     Some(Change(authIden.getEmailAddress,
-                 authIden.getName,
-                 commit.getFullMessage,
-                 commit.getId.abbreviate(7).name,
-                 commit.getCommitTime * 1000L,
-                 footerElements,
-                 config.highlightPersonalExchange))
+      authIden.getName,
+      commit.getFullMessage,
+      commit.getId.abbreviate(7).name,
+      commit.getCommitTime * 1000L,
+      footerElements,
+      config.highlightPersonalExchange
+    )
+    )
   }
 
-  def changes(participationBarCount:Int, commitLimitMillis: Long): Seq[Change] = {
-    def logSkipMessage(msg:String) = {
+  def changes(participationBarCount: Int, commitLimitMillis: Long): Seq[Change] = {
+    def logSkipMessage(msg: String) = {
       System.err.println("W: skipping " + repo.getAbsolutePath + " " + msg)
     }
     try {
@@ -87,6 +91,7 @@ class RepoAnalyzer(repo: File) {
         val timeFilter = CommitTimeRevFilter.between(now - 86400000L * (commitLimitMillis * participationBarCount), now)
         implicit def connectionResource[A <: RevWalk] = new Resource[A] {
           override def close(r: A) = r.dispose()
+
           override def closeAfterException(r: A, t: Throwable): Unit = {
             logSkipMessage("resource " + t.getMessage)
             close(r)
@@ -113,7 +118,7 @@ class RepoAnalyzer(repo: File) {
         }.opt.orElse(Some(Nil)).get
       }
     } catch {
-      case e@(_: MissingObjectException | _: NoHeadException  | _: NullPointerException) => {
+      case e@(_: MissingObjectException | _: NoHeadException | _: NullPointerException) => {
         logSkipMessage(e.getMessage)
         Nil
       }
@@ -129,18 +134,27 @@ object RepoAnalyzer {
     repoDirs.par.map { repo =>
       println("Scanning:   " + repo)
       val participationBarCount = 19
+      val history = 3
       val analy = new RepoAnalyzer(repo)
-      val allChanges: Seq[Change] = analy.changes(participationBarCount, commitLimitMillis * 3)
+      val allChanges: Seq[Change] = analy.changes(participationBarCount, commitLimitMillis * history)
 
       val barPercentages = calcParticipationPercentages(allChanges.map(_.commitTimeMillis), participationBarCount, //
-        commitLimitMillis, System.currentTimeMillis())
+        commitLimitMillis, System.currentTimeMillis()
+      )
 
       val now = System.currentTimeMillis()
       val relevantChanges = allChanges.filter(c ⇒ c.commitTimeMillis >= now - commitLimitMillis)
       val authorsToEmails: Map[String, String] = relevantChanges //
         .map(c => (c.authorName, c.authorEmail)).foldLeft(Map[String, String]())(_ + _)
 
-      val result: Seq[VisibleChange] = relevantChanges.map(toVisChange(analy.toName(), analy.absolutPath(), authorsToEmails))
+      def toVis = toVisChange(analy.toName(), analy.absolutPath(), authorsToEmails) _
+      val result: Seq[VisibleChange] = relevantChanges.map(toVis)
+      val reviewsOver = VisibleRepo.percentageOk(allChanges.map(toVis))
+      val badgeReviews: Seq[VisBadge] = reviewsOver match {
+        case in: Int if in > 80 ⇒ Seq(VisBadge.moreReviews80(history, reviewsOver))
+        case in: Int if in > 60 ⇒ Seq(VisBadge.moreReviews60(history, reviewsOver))
+        case _ ⇒ Nil
+      }
 
       new VisibleRepo(
         repoName = analy.name(),
@@ -148,15 +162,20 @@ object RepoAnalyzer {
         _changes = result,
         branchNames = analy.branchNames(),
         _sprintLengthInDays = commitLimitDays,
-        participationPercentages = barPercentages)
+        _badges = badgeReviews,
+        participationPercentages = barPercentages
+      )
     }.seq
 
   }
 
-  def calcParticipationPercentages(timeStampsOfAllCommits: Seq[Long], barCount: Int, windowMillis: Long, nowMillis:Long): Seq[Int] = {
+  def calcParticipationPercentages(timeStampsOfAllCommits: Seq[Long],
+    barCount: Int,
+    windowMillis: Long,
+    nowMillis: Long): Seq[Int] = {
     val blocks = Seq.tabulate(barCount)(c ⇒ nowMillis - windowMillis * c)
-    def selectBlock(long: Long):Long = {
-      val b = blocks.filter( b ⇒ long <= b ).last
+    def selectBlock(long: Long): Long = {
+      val b = blocks.filter(b ⇒ long <= b).last
       blocks.size - blocks.indexOf(b) - 1
     }
     val filtered = timeStampsOfAllCommits
@@ -177,7 +196,7 @@ object RepoAnalyzer {
   }
 
   def toVisChange(repoName: String, absolutRepoPath: String, authorsToEmails: Map[String, String]) //
-                 (change: Change): VisibleChange = {
+    (change: Change): VisibleChange = {
     val author = Contributor(change.authorEmail, Contributor.AUTHOR)
 
     def lookup(username: String): String = {
@@ -200,15 +219,17 @@ object RepoAnalyzer {
 
       VisibleChange(signerAuthor, (Seq(author.copy(_typ = Contributor.REVIWER, email = author.email.toLowerCase)) ++
         reviewers).filterNot(noSigner) ++
-        signersWithoutFirst, change.commitTimeMillis, repoName, absolutRepoPath, change.highlightPersonalExchange)
+        signersWithoutFirst, change.commitTimeMillis, repoName, absolutRepoPath, change.highlightPersonalExchange
+      )
 
     } else {
       VisibleChange(author.copy(email = author.email.toLowerCase),
-                     reviewers ++ signers,
-                     change.commitTimeMillis,
-                     repoName,
-                     absolutRepoPath,
-                     change.highlightPersonalExchange)
+        reviewers ++ signers,
+        change.commitTimeMillis,
+        repoName,
+        absolutRepoPath,
+        change.highlightPersonalExchange
+      )
     }
 
     if (change.highlightPersonalExchange) {
@@ -220,8 +241,9 @@ object RepoAnalyzer {
         "other@example.org"
       }
       VisibleChange(Contributor("some@example.org", Contributor.AUTHOR), //
-                     visChange.contributors.map(_.copy(email = reviewer)), //
-                     visChange.commitTimeMillis, visChange.repoName, visChange.repoFullPath, change.highlightPersonalExchange)
+        visChange.contributors.map(_.copy(email = reviewer)), //
+        visChange.commitTimeMillis, visChange.repoName, visChange.repoFullPath, change.highlightPersonalExchange
+      )
     }
   }
 
@@ -233,7 +255,8 @@ object RepoAnalyzer {
         lookup(foot.value.trim)
       }
       Contributor(emailOrName, ContributorType(foot.key))
-    })
+    }
+    )
   }
 
   def findRecursiv(files: Seq[File], filter: File => Boolean): Seq[File] = {
@@ -268,7 +291,7 @@ object RepoAnalyzer {
 
   object FooterElement {
 
-    def signer(name:String, email:String) = FooterElement("Signed-off-by", name + " <" + email + ">")
+    def signer(name: String, email: String) = FooterElement("Signed-off-by", name + " <" + email + ">")
 
     def elementsIn(text: String): Seq[FooterElement] = {
       val lines = text.split("\n")
@@ -283,12 +306,12 @@ object RepoAnalyzer {
   }
 
   case class Change(authorEmail: String,
-                    authorName: String,
-                    commitMsg: String,
-                    id: String,
-                    commitTimeMillis: Long,
-                    footer: Seq[FooterElement] = Nil,
-                    highlightPersonalExchange: Boolean = false)
+    authorName: String,
+    commitMsg: String,
+    id: String,
+    commitTimeMillis: Long,
+    footer: Seq[FooterElement] = Nil,
+    highlightPersonalExchange: Boolean = false)
 
   sealed case class RepoConfig(config: com.typesafe.config.Config) {
 
