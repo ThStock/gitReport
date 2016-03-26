@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <title>Gerrit Truck by Repo Report</title>
   <link rel="icon" type="image/png" href="git-report-xs.png" />
-  <link rel="stylesheet" href="./bootstrap-3.3.2-dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="./bootstrap-3.3.6-dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="./octoicons/octicons.css">
 <style>
   body {
