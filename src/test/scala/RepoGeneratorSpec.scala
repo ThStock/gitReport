@@ -271,7 +271,7 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory 
       (diskIo.copyToOutputFolder _).expects("octoicons/octicons.eot")
       (diskIo.copyToOutputFolder _).expects("octoicons/octicons.svg")
       (diskIo.copyToOutputFolder _).expects("octoicons/octicons.woff")
-      (diskIo.copyToOutputFolder _).expects("bootstrap-3.3.2-dist/css/bootstrap.min.css")
+      (diskIo.copyToOutputFolder _).expects("bootstrap-3.3.6-dist/css/bootstrap.min.css")
       (diskIo.copyToOutputFolder _).expects("git-report-xs.png")
       (diskIo.copyToOutputFolder _).expects("git-report.svg")
 
