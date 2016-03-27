@@ -14,7 +14,7 @@ class ReportGenerator(repos: Seq[VisibleRepoT]) {
     if (repos != Nil) {
       val content: Seq[VisibleChangeT] = repos.flatMap(_.changes).sortBy(_.commitTimeMillis).reverse
 
-      writeTruckByRepo(repoActivityLimit, content, displayLimit, sprintLengthInDays, new DiskIo(outDir))
+      writeTruckByRepo(repoActivityLimit, content, displayLimit, sprintLengthInDays, new DiskIo(outDir), new Date())
     }
   }
 
@@ -25,7 +25,7 @@ class ReportGenerator(repos: Seq[VisibleRepoT]) {
                        content: Seq[VisibleChangeT],
                        displayLimit: Int,
                        sprintLengthInDays: Int,
-                       diskIo: DiskIoT) {
+                       diskIo: DiskIoT, now: Date) {
     val fullPathToBranchNames:Map[String, Seq[String]] = repoFullPathToRepos
       .map(kv => (kv._1, kv._2.branchNames))
     def branchNamesOf(key: String):Seq[String] = {
@@ -44,7 +44,7 @@ class ReportGenerator(repos: Seq[VisibleRepoT]) {
       content.map(_.commitTimeMillis).max
     }
 
-    def writeReport() {
+    def writeReport(now: Date) {
 
       val filterCommitDate = latestCommitDate
       val contentListed = content.filter(_.commitTimeMillis <= filterCommitDate).take(displayLimit)
@@ -94,12 +94,12 @@ class ReportGenerator(repos: Seq[VisibleRepoT]) {
                                   latestCommitDate = ReportGenerator.formatedDateByMillis(contentListed.map(_.commitTimeMillis).min),
                                   newestCommitDate = ReportGenerator.formatedDateByMillis(filterCommitDate),
                                   sprintLength = sprintLengthInDays)
-        diskIo.writeByNameToDisk("truckByProject", segemnts, "truckByProject" + 0) // TODO remove zero
+        diskIo.writeByNameToDisk("truckByProject", segemnts, now, "truckByProject" + 0) // TODO remove zero
 
       }
     }
 
-    writeReport()
+    writeReport(now)
     diskIo.copyToOutputFolder("octoicons/octicons.css")
     diskIo.copyToOutputFolder("octoicons/octicons.eot")
     diskIo.copyToOutputFolder("octoicons/octicons.svg")
@@ -128,7 +128,7 @@ object ReportGenerator {
   trait DiskIoT {
     def copyToOutputFolder(path: String)
 
-    def writeByNameToDisk(reportFileName: String, content: Any, outputFileName: String = "")
+    def writeByNameToDisk(reportFileName: String, content: Any, now: Date, outputFileName: String = "")
   }
 
   class DiskIo(outDir: File) extends DiskIoT {
@@ -144,12 +144,12 @@ object ReportGenerator {
       }
     }
 
-    def writeByNameToDisk(reportFileName: String, content: Any, outputFileName: String = "") {
+    def writeByNameToDisk(reportFileName: String, content: Any, now:Date, outputFileName: String = "") {
       val fileName = reportFileName + ".mu" // TODO hbs
       val text = io.Source.fromInputStream(getClass.getResourceAsStream(fileName), "utf-8").mkString
       val template = Handlebars(text)
 
-      val contentMap: Map[String, Any] = Map("content" → content, "reportDate" → ReportGenerator.formatedDate(new Date()))
+      val contentMap: Map[String, Any] = Map("content" → content, "reportDate" → ReportGenerator.formatedDate(now))
       val outFileNameWithSuffix = if (outputFileName.isEmpty) {
         reportFileName
       } else {
@@ -214,7 +214,7 @@ object ReportGenerator {
     formatedDate(new Date(date))
   }
 
-  private def formatedDate(date: Date): String = {
+  def formatedDate(date: Date): String = {
     new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss").format(date)
   }
 

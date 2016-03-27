@@ -2,6 +2,7 @@ import ChangeTypes._
 import ReportGenerator.{ActivityScore, Segmented, Slot}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{FeatureSpec, GivenWhenThen}
+import java.util.Date
 
 class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory {
 
@@ -264,6 +265,7 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory 
   feature("write") {
     scenario("empty") {
       Given("a")
+      val now = new Date()
       val repos: Seq[VisibleRepoT] = Nil
       val diskIo = mock[ReportGenerator.DiskIoT]
 
@@ -276,13 +278,14 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory 
       (diskIo.copyToOutputFolder _).expects("git-report.svg")
 
       When("write")
-      new ReportGenerator(repos).writeTruckByRepo(0, repos.flatMap(_.changes), 1, 1, diskIo)
+      new ReportGenerator(repos).writeTruckByRepo(0, repos.flatMap(_.changes), 1, 1, diskIo, now)
 
       Then("check")
     }
 
     scenario("single") {
       Given("a")
+      val now = new Date()
       val repo = stub[VisibleRepoT]
       (repo.participationPercentages _).when().returning(Nil).once()
       (repo.badges _).when().returning(Nil).once()
@@ -298,20 +301,21 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory 
 
       val visRepo = newRepo("r", change, "master")
       val o = Segmented(Seq(Slot(Seq(visRepo)), Slot(Nil), Slot(Nil)), "1970-01-01 01:00:00", "1970-01-01 01:00:00", 1)
-      (diskIo.writeByNameToDisk _).expects("truckByProject", o, "truckByProject0").once()
+      (diskIo.writeByNameToDisk _).expects("truckByProject", o, now, "truckByProject0").once()
       (diskIo.copyToOutputFolder _).expects(*).anyNumberOfTimes()
       (repo.changes _).when().returning(Seq(change)).once()
       (repo.branchNames _).when().returning(Seq("master")).once()
       (repo.repoFullPath _).when().returning("/home/git/r/repoName").once() // TODO missing
 
       When("write")
-      new ReportGenerator(repos).writeTruckByRepo(0, repos.flatMap(_.changes), 10, 1, diskIo)
+      new ReportGenerator(repos).writeTruckByRepo(0, repos.flatMap(_.changes), 10, 1, diskIo, now)
 
       Then("check")
     }
 
     scenario("two") {
       Given("a")
+      val now = new Date()
       val diskIo = mock[ReportGenerator.DiskIoT]
       val author = Contributor("q@example.org", Contributor.AUTHOR)
       val changeA = stub[VisibleChangeT]
@@ -331,7 +335,7 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory 
       val visRepoA = newRepo("a", changeA, "master")
       val visRepoB = newRepo("b", changeB, "develop")
       val o = Segmented(Seq(Slot(Seq(visRepoA)), Slot(Seq(visRepoB)), Slot(Nil)), "1970-01-01 01:00:00", "1970-01-01 01:00:00", 1)
-      (diskIo.writeByNameToDisk _).expects("truckByProject", o, "truckByProject0").once()
+      (diskIo.writeByNameToDisk _).expects("truckByProject", o, now, "truckByProject0").once()
       (diskIo.copyToOutputFolder _).expects(*).anyNumberOfTimes()
 
       val repoA = stub[VisibleRepoT]
@@ -351,7 +355,7 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory 
       (repoB.repoFullPath _).when().returning("/home/git/b/repoName").anyNumberOfTimes()
 
       When("write")
-      new ReportGenerator(repos).writeTruckByRepo(0, repos.flatMap(_.changes), 10, 1, diskIo)
+      new ReportGenerator(repos).writeTruckByRepo(0, repos.flatMap(_.changes), 10, 1, diskIo, now)
 
       Then("check")
     }
