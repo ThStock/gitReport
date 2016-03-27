@@ -173,6 +173,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
   feature("to visible change") {
     scenario("convert commit with only an author") {
       Given("change with author")
+      java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("UTC"))
       val repoName = "a"
       val authorsToEmails = Map[String, String]()
       val authorEmail: String = "bert@example.org"
@@ -187,7 +188,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult(true)(result.author.isAuthor)
       assertResult("author")(result.author.typ)
       assertResult(7000)(result.commitTimeMillis)
-      assertResult("Time: 1970-01-01 01:00:07\nRepo: a")(result.title)
+      assertResult("Time: 1970-01-01 00:00:07\nRepo: a")(result.title)
       assertResult(Nil)(result.contributors)
       assertResult(Seq(Contributor(authorEmail, Contributor.AUTHOR)))(result.members)
       assertResult(VisibleChangeStatus.warn)(result.changeStatus)
@@ -196,6 +197,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
 
     scenario("convert commit with reviewers") {
       Given("change with author and reviewers")
+      java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("UTC"))
       val repoName = "a"
       val authorEmail: String = "Bert@example.org"
       val reviewerEmail = "Reviewer@Example.org"
@@ -214,7 +216,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult(true)(result.author.isAuthor)
       assertResult("author")(result.author.typ)
       assertResult(11000)(result.commitTimeMillis)
-      assertResult("Time: 1970-01-01 01:00:11\nRepo: a")(result.title)
+      assertResult("Time: 1970-01-01 00:00:11\nRepo: a")(result.title)
 
       val expectedContributors: Seq[Contributor] = //
         Seq(Contributor("Some", Contributor.REVIWER), Contributor(reviewerEmail.toLowerCase, Contributor.REVIWER))
@@ -232,6 +234,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
 
     scenario("convert commit with signer") {
       Given("change with author and signer")
+      java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("UTC"))
       val repoName = "a"
       val authorsToEmails = Map[String, String]()
       val authorEmail: String = "Bert@example.org"
@@ -248,7 +251,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult(true)(result.author.isAuthor)
       assertResult("author")(result.author.typ)
       assertResult(81000)(result.commitTimeMillis)
-      assertResult("Time: 1970-01-01 01:01:21\nRepo: a")(result.title)
+      assertResult("Time: 1970-01-01 00:01:21\nRepo: a")(result.title)
       assertResult(Seq(Contributor(authorEmail.toLowerCase, Contributor.REVIWER)))(result.contributors)
       val expectedMembers: Seq[Contributor] = //
         Seq(Contributor(authorEmail.toLowerCase, Contributor.REVIWER), //
@@ -288,6 +291,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
 
     scenario("convert commit with signer - no personal details") {
       Given("change with author and signer")
+      java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("UTC"))
       val repoName = "a"
       val authorsToEmails = Map[String, String]()
       val authorEmail: String = "Bert@example.org"
@@ -304,7 +308,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult(true)(result.author.isAuthor)
       assertResult("author")(result.author.typ)
       assertResult(81000)(result.commitTimeMillis)
-      assertResult("Time: 1970-01-01 01:01:21\nRepo: a")(result.title)
+      assertResult("Time: 1970-01-01 00:01:21\nRepo: a")(result.title)
       assertResult(Seq(Contributor("other@example.org", Contributor.REVIWER)))(result.contributors)
       assertResult(Seq(Contributor("other@example.org", Contributor.REVIWER), Contributor("some@example.org", Contributor.AUTHOR)
       )
