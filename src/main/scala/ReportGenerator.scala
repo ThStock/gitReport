@@ -55,7 +55,13 @@ class ReportGenerator(repos: Seq[VisibleRepoT]) {
         val truckByProject: Seq[VisibleRepo] = contentGrouped.toSeq.map { in =>
           val repoFullPath = in._2.map(_.repoFullPath).head.toString
           val repoName = in._2.map(_.repoName).head.toString
-          val r = repoFullPathToRepos.get(repoFullPath).get
+          val rOpt = repoFullPathToRepos.get(repoFullPath)
+          val r = if (rOpt.isDefined) {
+            rOpt.get
+          } else {
+            val repoNames = repoFullPathToRepos.map(_._1)
+            throw new IllegalStateException("no repo for fullPath: " + repoFullPath + " in " + repoNames)
+          }
           VisibleRepo(repoName = repoName,
                        repoFullPath = repoFullPath,
                        _changes = in._2,

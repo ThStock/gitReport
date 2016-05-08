@@ -122,6 +122,11 @@ object ChangeTypes {
                          topComitter: Boolean = false) extends VisibleRepoT {
     repoFullPath.getClass // XXX null check
 
+    if (!repoFullPath.endsWith(repoName)) {
+      // TODO Test
+      throw new IllegalStateException(repoFullPath + " must end with " +  repoName)
+    }
+
     val badges = _badges
 
     val activityIndex = _activity match {

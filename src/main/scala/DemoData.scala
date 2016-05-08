@@ -36,20 +36,33 @@ object DemoData {
       })(_))
     )
 
-    Seq.tabulate(changes.size)(i => vRepo("demo-repo-", i + 1, changes(i), sprintLengthInDays))
+    val anonymChanges = changes(5).map(_.apply("demo-repo-hidden"))
+      .map(in => in.copy(author = in.author.copy(email = "none@example.org")))
+      .map(in => in.copy(contributors = in.contributors.map(contrib => contrib.copy(email = "any@example.org"))))
+
+    val manuals = Seq(VisibleRepo(repoName = "demo-repo-hidden", repoFullPath = "/home/any/git/demo-repo-hidden",
+      _changes = anonymChanges,
+      branchNames = Seq("master"),
+      _badges = Nil,
+      topComitter = true,
+      _sprintLengthInDays = sprintLengthInDays, participationPercentages = upAndDown()
+    ))
+
+    Seq.tabulate(changes.size)(i => vRepo("demo-repo-", i + 1, changes(i), sprintLengthInDays)) ++ manuals
   }
 
-  def bySprintLenght(sprintLenghtInDays: Int): (ChangeTypes.VisibleChange) => Boolean = {
-    def x(change: VisibleChange) = true
-    x
-  }
+  def bySprintLenght(sprintLenghtInDays: Int): (ChangeTypes.VisibleChange) => Boolean = _ => true
+
+  def upAndDown() = normal(in => if (in % 2 == 0) { 50 } else { 100 })
+
+  def normal(f:(Int => Int)) = Seq.tabulate(19)(f).reverse
 
   private def vRepo(name: String, number: Int, _changes: Seq[(String) => VisibleChange], sprintLengthInDays: Int) = {
     VisibleRepo(repoName = name + number, repoFullPath = "/home/any/git/" + name + number,
       _changes = _changes.map(_.apply(name + number)).filter(bySprintLenght(sprintLengthInDays)),
       branchNames = Seq.tabulate(number % 3 + 1)(_ + "b"),
       _badges = Seq(VisBadge.moreReviews80(3, 88)),
-      _sprintLengthInDays = sprintLengthInDays, participationPercentages = Seq.tabulate(19)(i => i * 10).reverse
+      _sprintLengthInDays = sprintLengthInDays, participationPercentages = normal(i => i * 10)
     )
   }
 
