@@ -5,6 +5,14 @@ import ChangeTypes._
 
 object DemoData {
 
+  private val counter = new AtomicInteger(1)
+
+  private val r = Some(ChangeType(Contributor.REVIWER, Some("z@example.org")))
+  private val a = Some(ChangeType(Contributor.REVIWER))
+  private val n = None
+
+  private case class ChangeType(contributorType: ContributorType, emailChange: Option[String] = None)
+
   def get(sprintLengthInDays: Int): Seq[VisibleRepo] = {
 
     def chA = vChange("A")(_)
@@ -51,11 +59,11 @@ object DemoData {
     Seq.tabulate(changes.size)(i => vRepo("demo-repo-", i + 1, changes(i), sprintLengthInDays)) ++ manuals
   }
 
-  def bySprintLenght(sprintLenghtInDays: Int): (ChangeTypes.VisibleChange) => Boolean = _ => true
+  private def bySprintLenght(sprintLenghtInDays: Int): (ChangeTypes.VisibleChange) => Boolean = _ => true
 
-  def upAndDown() = normal(in => if (in % 2 == 0) { 50 } else { 100 })
+  private def upAndDown() = normal(in => if (in % 2 == 0) { 50 } else { 100 })
 
-  def normal(f:(Int => Int)) = Seq.tabulate(19)(f).reverse
+  private def normal(f:(Int => Int)) = Seq.tabulate(19)(f).reverse
 
   private def vRepo(name: String, number: Int, _changes: Seq[(String) => VisibleChange], sprintLengthInDays: Int) = {
     VisibleRepo(repoName = name + number, repoFullPath = "/home/any/git/" + name + number,
@@ -82,13 +90,5 @@ object DemoData {
 
     VisibleChange(c1, reviewer, now, repoName, "/home/any/git/" + repoName, true)
   }
-
-  val counter = new AtomicInteger(1)
-
-  val r = Some(ChangeType(Contributor.REVIWER, Some("z@example.org")))
-  val a = Some(ChangeType(Contributor.REVIWER))
-  val n = None
-
-  case class ChangeType(contributorType: ContributorType, emailChange: Option[String] = None)
 
 }
