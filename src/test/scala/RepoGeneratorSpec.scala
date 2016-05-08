@@ -302,7 +302,7 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory 
 
       val visRepo = newRepo("r", change, "master")
       val o = Segmented(Seq(Slot(Seq(visRepo)), Slot(Nil), Slot(Nil)), "1970-01-01 00:00:00", "1970-01-01 00:00:00", 1)
-      (diskIo.writeByNameToDisk _).expects("truckByProject", o, now, "truckByProject0").once()
+      (diskIo.writeByNameToDisk _).expects("truckByProject", o, now, "index").once()
       (diskIo.copyToOutputFolder _).expects(*).anyNumberOfTimes()
       (repo.changes _).when().returning(Seq(change)).once()
       (repo.branchNames _).when().returning(Seq("master")).once()
@@ -337,7 +337,7 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory 
       val visRepoA = newRepo("a", changeA, "master")
       val visRepoB = newRepo("b", changeB, "develop")
       val o = Segmented(Seq(Slot(Seq(visRepoA)), Slot(Seq(visRepoB)), Slot(Nil)), "1970-01-01 00:00:00", "1970-01-01 00:00:00", 1)
-      (diskIo.writeByNameToDisk _).expects("truckByProject", o, now, "truckByProject0").once()
+      (diskIo.writeByNameToDisk _).expects("truckByProject", o, now, "index").once()
       (diskIo.copyToOutputFolder _).expects(*).anyNumberOfTimes()
 
       val repoA = stub[VisibleRepoT]

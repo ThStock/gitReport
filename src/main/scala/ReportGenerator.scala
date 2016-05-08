@@ -100,7 +100,7 @@ class ReportGenerator(repos: Seq[VisibleRepoT]) {
                                   latestCommitDate = ReportGenerator.formatedDateByMillis(contentListed.map(_.commitTimeMillis).min),
                                   newestCommitDate = ReportGenerator.formatedDateByMillis(filterCommitDate),
                                   sprintLength = sprintLengthInDays)
-        diskIo.writeByNameToDisk("truckByProject", segemnts, now, "truckByProject" + 0) // TODO remove zero
+        diskIo.writeByNameToDisk("truckByProject", segemnts, now, "index")
 
       }
     }
