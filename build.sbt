@@ -4,7 +4,7 @@ version := "1.0"
 
 scalaVersion := "2.11.8"
 
-libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % "4.2.0.201601211800-r"
+libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % "4.3.1.201605051710-r"
 
 libraryDependencies += "com.jsuereth" %% "scala-arm" % "1.4"
 
