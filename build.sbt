@@ -4,17 +4,17 @@ version := "1.0"
 
 scalaVersion := "2.11.8"
 
-libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % "4.3.1.201605051710-r"
+libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % "4.6.0.201612231935-r"
 
 libraryDependencies += "com.jsuereth" %% "scala-arm" % "1.4"
 
-libraryDependencies += "com.gilt" %% "handlebars-scala" % "2.1.1"
+libraryDependencies += "com.gilt" %% "handlebars-scala" % "2.1.1" // TODO scala 2.12 blocker
 
-libraryDependencies += "com.typesafe" % "config" % "1.3.0"
+libraryDependencies += "com.typesafe" % "config" % "1.3.1"
 
 assemblyJarName in assembly := "git-report.jar"
 
-libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.6" % "test"
+libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6" % "test"
 
 libraryDependencies += "org.scalamock" %% "scalamock-scalatest-support" % "3.2.2" % "test"
 
