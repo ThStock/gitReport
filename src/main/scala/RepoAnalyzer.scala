@@ -100,6 +100,14 @@ class RepoAnalyzer(repo: File) {
         val configFile = new File(repo.getParentFile.getAbsoluteFile, ".git-report.conf")
         val conf = RepoConfig(ConfigFactory.parseFile(configFile))
 
+        def nextChange(w:RevWalk):RevCommit = {
+          try {
+            w.next()
+          } catch {
+            case t:Throwable => logSkipMessage(t.getMessage); null
+          }
+        }
+
         def toChangeFn(commit: RevCommit) = toChange(conf, commit)
 
         resource.managed(new RevWalk(git.getRepository)).map { walk: RevWalk =>
@@ -107,7 +115,7 @@ class RepoAnalyzer(repo: File) {
           val root = walk.parseCommit(headId)
           walk.markStart(root)
           def changesOfWalk(): Seq[RevCommit] = {
-            val change = walk.next()
+            val change = nextChange(walk)
             if (change != null) {
               Seq(change) ++ changesOfWalk()
             } else {
@@ -118,7 +126,11 @@ class RepoAnalyzer(repo: File) {
         }.opt.orElse(Some(Nil)).get
       }
     } catch {
-      case e@(_: MissingObjectException | _: NoHeadException | _: NullPointerException) => {
+      case e@(_: MissingObjectException | _: NoHeadException | _: NullPointerException) ⇒ {
+        logSkipMessage(e.getMessage)
+        Nil
+      }
+      case e:Throwable ⇒ {
         logSkipMessage(e.getMessage)
         Nil
       }
