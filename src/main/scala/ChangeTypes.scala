@@ -62,6 +62,12 @@ object ChangeTypes {
     val isAuthor = name == "author"
   }
 
+  object ContributorType {
+    val AUTHOR: ContributorType = ContributorType("author")
+    val REVIEWER = ContributorType("Code-Review")
+    val PLAYER = ContributorType("player")
+  }
+
   case class Contributor(email: String,
                          _typ: ContributorType,
                          activity: Contributor.ContributorActivity = ContributorActivity.LOWEST,
@@ -72,13 +78,11 @@ object ChangeTypes {
     val activityReason = activity.reason
     val typ: String = _typ.name
 
-    def copyAsAuthor() = copy(_typ = Contributor.AUTHOR)
+    def copyAsAuthor() = copy(_typ = ContributorType.AUTHOR)
 
   }
 
   object Contributor {
-    val AUTHOR: ContributorType = ContributorType("author")
-    val REVIWER = ContributorType("Code-Review")
 
     case class ContributorActivity(key: String, _reason:String = "") {
       def reason = _reason
@@ -163,8 +167,9 @@ object ChangeTypes {
 
     val changes = _changes
 
-    val members: Seq[Contributor] = VisibleRepo.toContibutors(changes).map(_.copy(noGerrit = this.noGerrit))
-      .map(applyMainCommiter)
+    val members: Seq[Contributor] = VisibleRepo.toContibutors(changes)
+      .map(_.copy(noGerrit = this.noGerrit))
+      .map(applyMainCommitter)
 
     private def changesByAuthor = _changes.groupBy(_.author).toSeq
 
@@ -185,22 +190,22 @@ object ChangeTypes {
       }
     }
 
-    private lazy val mainCommiterMembers:Seq[Contributor] = {
+    private lazy val mainCommitterMembers:Seq[Contributor] = {
       val devs = changeCountsByAuthor.map(score => Math.pow(score - changesPerDay, 2))
       val stddev = Math.sqrt(devs.sum / devs.size)
       changesByAuthor.filter(_._2.size >= stddev.toInt).map(_._1)
     }
 
-    val mainComitters: Int = {
+    val mainCommitters: Int = {
       if (changes.exists(_.highlightPersonalExchange)) {
-        mainCommiterMembers.size
+        mainCommitterMembers.size
       } else {
         0
       }
     }
 
-    private def applyMainCommiter(contributor: Contributor) = {
-      if (mainCommiterMembers.map(_.email).contains(contributor.email)) {
+    private def applyMainCommitter(contributor: Contributor) = {
+      if (mainCommitterMembers.map(_.email).contains(contributor.email)) {
         contributor.copy(isMainComitter = true)
       } else {
         contributor
@@ -227,7 +232,7 @@ object ChangeTypes {
 
       val allMembers = changes.flatMap(_.members)
       val allMembersEmails = allMembers.filter(_.isAuthor).map(_.email).toSet
-      val allChangesByAuthor = changes.groupBy(_.author.copy(_typ = ContributorType("player")))
+      val allChangesByAuthor = changes.groupBy(_.author.copy(_typ = ContributorType.PLAYER))
       val allChangesByContributor = changes.groupBy(_.contributors).flatMap(in => {
         in._1.map(key => (EmailAndTyp.by(key), in._2))
       })
@@ -240,21 +245,21 @@ object ChangeTypes {
         } else {
           val self = EmailAndTyp(contributor.email, "")
           val changesOf = allChangesByAuthor(contributor)
-          val membersSimpyfied = changesOf.flatMap(_.members).map(EmailAndTyp.by)
-          val changesOfContibutors = changesOf.map(_.contributors.filterNot(_.isAuthor))
+          val membersSimplified = changesOf.flatMap(_.members).map(EmailAndTyp.by)
+          val changesOfContributors = changesOf.map(_.contributors.filterNot(_.isAuthor))
             .map(in => in.map(EmailAndTyp.by))
-          val selfReviews = changesOfContibutors.filter(_.contains(self))
-          val contributorsSimpyfied = changesOf.flatMap(_.contributors).map(EmailAndTyp.by)
+          val selfReviews = changesOfContributors.filter(_.contains(self))
+          val contributorsSimplified = changesOf.flatMap(_.contributors).map(EmailAndTyp.by)
           val contributions = allChangesByContributor.get(EmailAndTyp.by(contributor))
 
-          val selfReviewsVsChanges = selfReviews.size.toDouble / (changesOfContibutors.size + contributions
+          val selfReviewsVsChanges = selfReviews.size.toDouble / (changesOfContributors.size + contributions
             .getOrElse(Nil)
             .size - selfReviews.size)
-          val isNoDirectCommit = contributorsSimpyfied.size >= changesOf.size
-          val repoHasMoreThenOneMember = membersSimpyfied.toSet.size > 1
-          val repoHasMoreThenOneContributors = contributorsSimpyfied.toSet.size > 1
+          val isNoDirectCommit = contributorsSimplified.size >= changesOf.size
+          val repoHasMoreThenOneMember = membersSimplified.toSet.size > 1
+          val repoHasMoreThenOneContributors = contributorsSimplified.toSet.size > 1
 
-          val exchangeWithTeam = allMembersEmails.size.toDouble / membersSimpyfied.toSet.size.toDouble
+          val exchangeWithTeam = allMembersEmails.size.toDouble / membersSimplified.toSet.size.toDouble
           val exchangeWithHalfOfTeam = exchangeWithTeam < 2
 
           if (allMembersEmails.size > 1 && exchangeWithHalfOfTeam && selfReviewsVsChanges < 0.1d && isNoDirectCommit) {
@@ -274,7 +279,7 @@ object ChangeTypes {
       }
 
       allMembers
-        .map(member => member.copy(_typ = ContributorType("player")))
+        .map(member => member.copy(_typ = ContributorType.PLAYER))
         .distinct
         .map(member => member.copy(activity = selectActivity(member)))
         .sortWith(_.email < _.email)

@@ -1,4 +1,4 @@
-import ChangeTypes.{Contributor, VisibleChangeStatus}
+import ChangeTypes.{Contributor, ContributorType, VisibleChangeStatus}
 import RepoAnalyzer.{Change, FooterElement}
 import org.scalatest._
 
@@ -190,7 +190,7 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult(7000)(result.commitTimeMillis)
       assertResult("Time: 1970-01-01 00:00:07\nRepo: a")(result.title)
       assertResult(Nil)(result.contributors)
-      assertResult(Seq(Contributor(authorEmail, Contributor.AUTHOR)))(result.members)
+      assertResult(Seq(Contributor(authorEmail, ContributorType.AUTHOR)))(result.members)
       assertResult(VisibleChangeStatus.warn)(result.changeStatus)
       assertResult("warn")(result.color)
     }
@@ -219,13 +219,13 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult("Time: 1970-01-01 00:00:11\nRepo: a")(result.title)
 
       val expectedContributors: Seq[Contributor] = //
-        Seq(Contributor("Some", Contributor.REVIWER), Contributor(reviewerEmail.toLowerCase, Contributor.REVIWER))
+        Seq(Contributor("Some", ContributorType.REVIEWER), Contributor(reviewerEmail.toLowerCase, ContributorType.REVIEWER))
       assert(expectedContributors == result.contributors)
 
       val expectedMembers: Seq[Contributor] = Seq(//
-        Contributor("Some", Contributor.REVIWER),
-        Contributor(reviewerEmail.toLowerCase, Contributor.REVIWER),
-        Contributor(authorEmail.toLowerCase, Contributor.AUTHOR)
+        Contributor("Some", ContributorType.REVIEWER),
+        Contributor(reviewerEmail.toLowerCase, ContributorType.REVIEWER),
+        Contributor(authorEmail.toLowerCase, ContributorType.AUTHOR)
       )
       assert(expectedMembers == result.members)
       assertResult(VisibleChangeStatus.ok)(result.changeStatus)
@@ -252,10 +252,10 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult("author")(result.author.typ)
       assertResult(81000)(result.commitTimeMillis)
       assertResult("Time: 1970-01-01 00:01:21\nRepo: a")(result.title)
-      assertResult(Seq(Contributor(authorEmail.toLowerCase, Contributor.REVIWER)))(result.contributors)
+      assertResult(Seq(Contributor(authorEmail.toLowerCase, ContributorType.REVIEWER)))(result.contributors)
       val expectedMembers: Seq[Contributor] = //
-        Seq(Contributor(authorEmail.toLowerCase, Contributor.REVIWER), //
-          Contributor(signerEmail.toLowerCase, Contributor.AUTHOR) //
+        Seq(Contributor(authorEmail.toLowerCase, ContributorType.REVIEWER), //
+          Contributor(signerEmail.toLowerCase, ContributorType.AUTHOR) //
         )
       assert(expectedMembers == result.members)
       assertResult(VisibleChangeStatus.ok)(result.changeStatus)
@@ -279,10 +279,10 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       Then("compare")
       assertResult(signerEmail.toLowerCase)(result.author.email)
       assertResult("author")(result.author.typ)
-      assertResult(Seq(Contributor(authorEmail.toLowerCase, Contributor.AUTHOR)))(result.contributors)
+      assertResult(Seq(Contributor(authorEmail.toLowerCase, ContributorType.AUTHOR)))(result.contributors)
       val expectedMembers: Seq[Contributor] = //
-        Seq(Contributor(authorEmail.toLowerCase, Contributor.AUTHOR),
-          Contributor(signerEmail.toLowerCase, Contributor.AUTHOR) //
+        Seq(Contributor(authorEmail.toLowerCase, ContributorType.AUTHOR),
+          Contributor(signerEmail.toLowerCase, ContributorType.AUTHOR) //
         )
       assert(expectedMembers == result.members)
       assertResult(VisibleChangeStatus.ok)(result.changeStatus)
@@ -309,8 +309,8 @@ class RepoAnalyzerSpec extends FeatureSpec with GivenWhenThen {
       assertResult("author")(result.author.typ)
       assertResult(81000)(result.commitTimeMillis)
       assertResult("Time: 1970-01-01 00:01:21\nRepo: a")(result.title)
-      assertResult(Seq(Contributor("other@example.org", Contributor.REVIWER)))(result.contributors)
-      assertResult(Seq(Contributor("other@example.org", Contributor.REVIWER), Contributor("some@example.org", Contributor.AUTHOR)
+      assertResult(Seq(Contributor("other@example.org", ContributorType.REVIEWER)))(result.contributors)
+      assertResult(Seq(Contributor("other@example.org", ContributorType.REVIEWER), Contributor("some@example.org", ContributorType.AUTHOR)
       )
       )(result.members)
       assertResult(VisibleChangeStatus.ok)(result.changeStatus)

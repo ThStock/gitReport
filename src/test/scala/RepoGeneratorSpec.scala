@@ -293,7 +293,7 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory 
       val repos = Seq(repo)
       val diskIo = mock[ReportGenerator.DiskIoT]
       val change = stub[VisibleChangeT]
-      val author = Contributor("q@example.org", Contributor.AUTHOR)
+      val author = Contributor("q@example.org", ContributorType.AUTHOR)
       (change.members _).when().returning(Seq(author)).repeat(6)
       (change.contributors _).when().returning(Seq(author)).repeat(12)
       (change.author _).when().returning(author).repeat(9)
@@ -319,7 +319,7 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory 
       java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("UTC"))
       val now = new Date()
       val diskIo = mock[ReportGenerator.DiskIoT]
-      val author = Contributor("q@example.org", Contributor.AUTHOR)
+      val author = Contributor("q@example.org", ContributorType.AUTHOR)
       val changeA = stub[VisibleChangeT]
       (changeA.members _).when().returning(Seq(author))
       (changeA.contributors _).when().returning(Seq(author))

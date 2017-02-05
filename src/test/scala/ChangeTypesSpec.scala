@@ -1,4 +1,4 @@
-import ChangeTypes.{Contributor, VisibleChange, VisibleRepo}
+import ChangeTypes.{Contributor, ContributorType, VisibleChange, VisibleRepo}
 import ChangeTypesSpec._
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
@@ -14,7 +14,7 @@ class ChangeTypesSpec extends FeatureSpec with GivenWhenThen {
 
       Then("check")
       assert(0 == repo.changesPerDay)
-      assert(0 == repo.mainComitters)
+      assert(0 == repo.mainCommitters)
     }
 
     scenario("changesPerDay - 1") {
@@ -26,7 +26,7 @@ class ChangeTypesSpec extends FeatureSpec with GivenWhenThen {
 
       Then("check")
       assert(1 == repo.changesPerDay)
-      assert(1 == repo.mainComitters)
+      assert(1 == repo.mainCommitters)
     }
 
     scenario("changesPerDay - 2") {
@@ -38,7 +38,7 @@ class ChangeTypesSpec extends FeatureSpec with GivenWhenThen {
 
       Then("check")
       assert(2 == repo.changesPerDay)
-      assert(1 == repo.mainComitters)
+      assert(1 == repo.mainCommitters)
     }
 
     scenario("changesPerDay - 1.5") {
@@ -49,7 +49,7 @@ class ChangeTypesSpec extends FeatureSpec with GivenWhenThen {
       val repo = VisibleRepo("test", "/home/git/test", changes, Nil, 1, Nil, Nil)
 
       Then("check")
-      assert(2 == repo.mainComitters)
+      assert(2 == repo.mainCommitters)
       assert(1.5 == repo.changesPerDay)
     }
 
@@ -62,7 +62,7 @@ class ChangeTypesSpec extends FeatureSpec with GivenWhenThen {
       val repo = VisibleRepo("test", "/home/git/test", changes, Nil, 7, Nil, Nil)
 
       Then("check")
-      assert(2 == repo.mainComitters)
+      assert(2 == repo.mainCommitters)
       assert(2.8 == repo.changesPerDay)
     }
 
@@ -73,7 +73,7 @@ class ChangeTypesSpec extends FeatureSpec with GivenWhenThen {
 object ChangeTypesSpec {
 
   private def newChange(repoName: String)(authorEmail: String) = {
-    VisibleChange(author = Contributor(authorEmail + "@example.org", Contributor.AUTHOR), Nil, 0, "r1", "/a/b/r1", true)
+    VisibleChange(author = Contributor(authorEmail + "@example.org", ContributorType.AUTHOR), Nil, 0, "r1", "/a/b/r1", true)
   }
 
   def newVisChangeOfRepo(repoName: String): (String ⇒ VisibleChange) = {

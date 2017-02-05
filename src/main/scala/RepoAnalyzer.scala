@@ -210,7 +210,7 @@ object RepoAnalyzer {
 
   def toVisChange(repoName: String, absolutRepoPath: String, authorsToEmails: Map[String, String]) //
     (change: Change): VisibleChange = {
-    val author = Contributor(change.authorEmail, Contributor.AUTHOR)
+    val author = Contributor(change.authorEmail, ContributorType.AUTHOR)
 
     def lookup(username: String): String = {
       val email = authorsToEmails.get(username)
@@ -225,12 +225,12 @@ object RepoAnalyzer {
     val reviewers: Seq[Contributor] = filterAndMap(change.footer, "Code-Review", lookup)
 
     val visChange = if (signers != Nil) {
-      val signerAuthor = Contributor(signers.head.email.toLowerCase, Contributor.AUTHOR)
-      val signersWithoutFirst = signers.map(_.copy(_typ = Contributor.AUTHOR)).filterNot(_ == signerAuthor)
+      val signerAuthor = Contributor(signers.head.email.toLowerCase, ContributorType.AUTHOR)
+      val signersWithoutFirst = signers.map(_.copy(_typ = ContributorType.AUTHOR)).filterNot(_ == signerAuthor)
 
       def noSigner(contributor: Contributor) = signers.map(_.email).contains(contributor.email)
 
-      VisibleChange(signerAuthor, (Seq(author.copy(_typ = Contributor.REVIWER, email = author.email.toLowerCase)) ++
+      VisibleChange(signerAuthor, (Seq(author.copy(_typ = ContributorType.REVIEWER, email = author.email.toLowerCase)) ++
         reviewers).filterNot(noSigner) ++
         signersWithoutFirst, change.commitTimeMillis, repoName, absolutRepoPath, change.highlightPersonalExchange
       )
@@ -253,7 +253,7 @@ object RepoAnalyzer {
       } else {
         "other@example.org"
       }
-      VisibleChange(Contributor("some@example.org", Contributor.AUTHOR), //
+      VisibleChange(Contributor("some@example.org", ContributorType.AUTHOR), //
         visChange.contributors.map(_.copy(email = reviewer)), //
         visChange.commitTimeMillis, visChange.repoName, visChange.repoFullPath, change.highlightPersonalExchange
       )

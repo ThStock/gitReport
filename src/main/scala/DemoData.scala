@@ -7,8 +7,8 @@ object DemoData {
 
   private val counter = new AtomicInteger(1)
 
-  private val r = Some(ChangeType(Contributor.REVIWER, Some("z@example.org")))
-  private val a = Some(ChangeType(Contributor.REVIWER))
+  private val r = Some(ChangeType(ContributorType.REVIEWER, Some("z@example.org")))
+  private val a = Some(ChangeType(ContributorType.REVIEWER))
   private val n = None
 
   private case class ChangeType(contributorType: ContributorType, emailChange: Option[String] = None)
@@ -78,7 +78,7 @@ object DemoData {
     val next = counter.incrementAndGet()
     val nowSec = (new Date().getTime / 1000L).toInt
     val now = nowSec - next * 60 * 60 * 4
-    val c1 = Contributor(emailPrefix + "@example.org", Contributor.AUTHOR)
+    val c1 = Contributor(emailPrefix + "@example.org", ContributorType.AUTHOR)
 
     val reviewer = if (changeType.isDefined) {
       Seq(c1.copy(_typ = changeType.get.contributorType,
