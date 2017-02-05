@@ -10,7 +10,7 @@ libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit" % "4.6.0.20161223
 
 libraryDependencies += "com.jsuereth" %% "scala-arm" % "1.4"
 
-libraryDependencies += "com.gilt" %% "handlebars-scala" % "2.1.1" // TODO scala 2.12 blocker
+libraryDependencies += "com.github.jknack" % "handlebars" % "4.0.6"
 
 libraryDependencies += "com.typesafe" % "config" % "1.3.1"
 

@@ -4,6 +4,8 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 import java.util.Date
 
+import scala.beans.BeanProperty
+
 class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory {
 
   feature("activity score") {
@@ -262,6 +264,46 @@ class RepoGeneratorSpec extends FeatureSpec with GivenWhenThen with MockFactory 
     }
   }
 
+  feature("render") {
+    scenario("empty") {
+      assertResult("""text""")(ReportGenerator.render("""text""", Map.empty))
+    }
+
+    scenario("data string") {
+      assertResult("""text string""")(ReportGenerator.render("""text {{data}}""", Map("data" -> "string")))
+    }
+
+    scenario("data class") {
+      case class Bert(@BeanProperty value:String)
+      assertResult("""text hallo""")(ReportGenerator.render("""text {{{data.value}}}""",
+        Map("data" -> Bert("hallo"))))
+    }
+    scenario("map map") {
+      assertResult("""text test""")(ReportGenerator.render("""text {{{data.value}}}""",
+        Map("data" -> Map("value" -> "test"))))
+    }
+    scenario("map seq") {
+      assertResult("""text test""")(ReportGenerator.render("""text {{#d}}{{.}}{{/d}}""",
+        Map("d" -> Seq("test"))))
+    }
+    scenario("map seq map") {
+      assertResult("""text y""")(ReportGenerator.render("""text {{#d}}{{x}}{{/d}}""",
+        Map("d" -> Seq(Map("x" -> "y")))))
+    }
+    scenario("data class seq map") {
+      case class Bert(@BeanProperty name:String, @BeanProperty value:Seq[Bert] = Nil)
+      assertResult("""ab""")(ReportGenerator.render("""{{in.name}}{{#in.value}}{{name}}{{/in.value}}""",
+        Map("in" -> Bert("a", Seq(Bert("b"))))))
+    }
+    scenario("data class seq map method") {
+      case class Bert(_name:String, value:Seq[Bert] = Nil) {
+        def name() = _name
+      }
+      assertResult("""ab""")(ReportGenerator.render("""{{in.name}}{{#in.value}}{{name}}{{/in.value}}""",
+        Map("in" -> Bert("a", Seq(Bert("b"))))))
+    }
+
+  }
   feature("write") {
     scenario("empty") {
       Given("a")

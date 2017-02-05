@@ -4,9 +4,12 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import ChangeTypes._
-import ReportGenerator.{DiskIo, DiskIoT, Segmented, Slot}
-import com.gilt.handlebars.scala.Handlebars
-import com.gilt.handlebars.scala.binding.dynamic._
+import ReportGenerator._
+import com.github.jknack.handlebars.{Handlebars, Helper, Options}
+import com.github.jknack.handlebars.helper.DefaultHelperRegistry
+
+import scala.beans.BeanProperty
+import scala.collection.{JavaConversions, JavaConverters}
 
 class ReportGenerator(repos: Seq[VisibleRepoT]) {
 
@@ -26,11 +29,12 @@ class ReportGenerator(repos: Seq[VisibleRepoT]) {
                        displayLimit: Int,
                        sprintLengthInDays: Int,
                        diskIo: DiskIoT, now: Date) {
-    val fullPathToBranchNames:Map[String, Seq[String]] = repoFullPathToRepos
+    val fullPathToBranchNames: Map[String, Seq[String]] = repoFullPathToRepos
       .map(kv => (kv._1, kv._2.branchNames))
-    def branchNamesOf(key: String):Seq[String] = {
 
-      val branches:Seq[String] = fullPathToBranchNames.getOrElse(key, Nil)
+    def branchNamesOf(key: String): Seq[String] = {
+
+      val branches: Seq[String] = fullPathToBranchNames.getOrElse(key, Nil)
       if (branches.nonEmpty) {
         branches
       } else {
@@ -63,13 +67,13 @@ class ReportGenerator(repos: Seq[VisibleRepoT]) {
             throw new IllegalStateException("no repo for fullPath: " + repoFullPath + " in " + repoNames)
           }
           VisibleRepo(repoName = repoName,
-                       repoFullPath = repoFullPath,
-                       _changes = in._2,
-                        _badges = r.badges,
-                       branchNames = branchNamesOf(repoFullPath),
-                       _sprintLengthInDays = sprintLengthInDays,
-                       participationPercentages = r.participationPercentages,
-                       _activity = ReportGenerator.repoActivityScoreOf(in._1, contentGrouped).intValue
+            repoFullPath = repoFullPath,
+            _changes = in._2,
+            _badges = r.badges,
+            branchNames = branchNamesOf(repoFullPath),
+            _sprintLengthInDays = sprintLengthInDays,
+            participationPercentages = r.participationPercentages,
+            _activity = ReportGenerator.repoActivityScoreOf(in._1, contentGrouped).intValue
           )
         }
 
@@ -97,9 +101,9 @@ class ReportGenerator(repos: Seq[VisibleRepoT]) {
         }
 
         val segemnts = Segmented(slots = Seq(Slot(segments(0)), Slot(segments(1)), Slot(segments(2))),
-                                  latestCommitDate = ReportGenerator.formatedDateByMillis(contentListed.map(_.commitTimeMillis).min),
-                                  newestCommitDate = ReportGenerator.formatedDateByMillis(filterCommitDate),
-                                  sprintLength = sprintLengthInDays)
+          latestCommitDate = ReportGenerator.formatedDateByMillis(contentListed.map(_.commitTimeMillis).min),
+          newestCommitDate = ReportGenerator.formatedDateByMillis(filterCommitDate),
+          sprintLength = sprintLengthInDays)
         diskIo.writeByNameToDisk("truckByProject", segemnts, now, "index")
 
       }
@@ -127,14 +131,15 @@ class ReportGenerator(repos: Seq[VisibleRepoT]) {
 
 object ReportGenerator {
 
-  case class Slot(repos: Seq[VisibleRepo])
+  case class Slot(@BeanProperty repos: Seq[VisibleRepo])
 
-  case class Segmented(slots: Seq[Slot], newestCommitDate: String, latestCommitDate: String, sprintLength: Int)
+  case class Segmented(@BeanProperty slots: Seq[Slot], @BeanProperty newestCommitDate: String,
+                       @BeanProperty latestCommitDate: String, @BeanProperty sprintLength: Int)
 
   trait DiskIoT {
     def copyToOutputFolder(path: String)
 
-    def writeByNameToDisk(reportFileName: String, content: Any, now: Date, outputFileName: String = "")
+    def writeByNameToDisk(reportFileName: String, content: Segmented, now: Date, outputFileName: String = "")
   }
 
   class DiskIo(outDir: File) extends DiskIoT {
@@ -150,10 +155,9 @@ object ReportGenerator {
       }
     }
 
-    def writeByNameToDisk(reportFileName: String, content: Any, now:Date, outputFileName: String = "") {
+    def writeByNameToDisk(reportFileName: String, content: Segmented, now: Date, outputFileName: String = "") {
       val fileName = reportFileName + ".mu" // TODO hbs
       val text = io.Source.fromInputStream(getClass.getResourceAsStream(fileName), "utf-8").mkString
-      val template = Handlebars(text)
 
       val contentMap: Map[String, Any] = Map("content" → content, "reportDate" → ReportGenerator.formatedDate(now))
       val outFileNameWithSuffix = if (outputFileName.isEmpty) {
@@ -161,11 +165,42 @@ object ReportGenerator {
       } else {
         outputFileName
       }
-
       val outputFile = new File(outDir, outFileNameWithSuffix + ".html")
-      RepoAnalyzer.writeToFile(template(contentMap), outputFile)
+
+      RepoAnalyzer.writeToFile(render(text, contentMap), outputFile)
       println("written: " + outputFile.getAbsolutePath)
     }
+  }
+
+  def render(templateRaw: String, contentMap: Map[String, Any]): String = {
+    val hbs = new Handlebars()
+    hbs.registerHelperMissing(new Helper[Any]() {
+      override def apply(context: Any, options: Options) =
+        throw new IllegalStateException(options.fn.text())
+    })
+    val template = hbs.compileInline(templateRaw)
+    template(toJavaTypes(contentMap))
+  }
+
+  private def getCCParams(cc: AnyRef): Map[String, Any] =
+    (Map[String, Any]() /: cc.getClass.getDeclaredFields) { (a, f) =>
+      f.setAccessible(true)
+      a + (f.getName → f.get(cc))
+    }.filterKeys(key ⇒ key != "$outer")
+
+  private def getCCMethods(cc: AnyRef): Map[String, Any] =
+    (Map[String, Any]() /: cc.getClass.getDeclaredMethods.toSeq.filter(_.getParameterCount == 0)) { (a, f) =>
+      f.setAccessible(true)
+      a + (f.getName → f.invoke(cc))
+    }
+
+  private def isCaseClass(o: AnyRef) = o.getClass.getInterfaces.contains(classOf[scala.Product])
+
+  private def toJavaTypes(x: Any): Any = x match {
+    case e: Map[_, _] ⇒ JavaConversions.mapAsJavaMap(e.mapValues(toJavaTypes))
+    case e: Seq[_] ⇒ JavaConversions.asJavaCollection(e.map(toJavaTypes))
+    case e: AnyRef if isCaseClass(e) ⇒ toJavaTypes(getCCParams(e) ++ getCCMethods(e))
+    case _ => x;
   }
 
   def slidingsOf[A](maxLength: Int)(sortedIn: Seq[A]): Seq[Seq[A]] = {
