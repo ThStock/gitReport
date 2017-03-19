@@ -88,7 +88,7 @@ class RepoAnalyzer(repo: File) {
       } else {
         val now = System.currentTimeMillis()
 
-        val timeFilter = CommitTimeRevFilter.between(now - 86400000L * (commitLimitMillis * participationBarCount), now)
+        val timeFilter = CommitTimeRevFilter.between(now - (commitLimitMillis * participationBarCount), now)
         implicit def connectionResource[A <: RevWalk] = new Resource[A] {
           override def close(r: A) = r.dispose()
 
@@ -155,13 +155,14 @@ object RepoAnalyzer {
       )
 
       val now = System.currentTimeMillis()
-      val relevantChanges = allChanges.filter(c ⇒ c.commitTimeMillis >= now - commitLimitMillis)
-      val authorsToEmails: Map[String, String] = relevantChanges //
+      val oneIterationChanges = allChanges.filter(c ⇒ c.commitTimeMillis >= now - commitLimitMillis)
+      val authorsToEmails: Map[String, String] = oneIterationChanges //
         .map(c => (c.authorName, c.authorEmail)).foldLeft(Map[String, String]())(_ + _)
 
       def toVis = toVisChange(analy.toName(), analy.absolutPath(), authorsToEmails) _
-      val result: Seq[VisibleChange] = relevantChanges.map(toVis)
-      val reviewsOver = VisibleRepo.percentageOk(allChanges.map(toVis))
+      val result: Seq[VisibleChange] = oneIterationChanges.map(toVis)
+      val changesRelevantForBadges = allChanges.filter(c ⇒ c.commitTimeMillis >= now - (commitLimitMillis * history))
+      val reviewsOver = VisibleRepo.percentageOk(changesRelevantForBadges.map(toVis))
       val badgeReviews: Seq[VisBadge] = reviewsOver match {
         case in: Int if in > 80 ⇒ Seq(VisBadge.moreReviews80(history, reviewsOver))
         case in: Int if in > 60 ⇒ Seq(VisBadge.moreReviews60(history, reviewsOver))
