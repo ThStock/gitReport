@@ -83,7 +83,7 @@ class ReportGenerator(repos: Seq[VisibleRepoT]) {
           0
         }
         val markedTopComitter = truckByProject.map(r => if (r.mainCommitters == topCommitts && r._activity > 1) {
-          r.copy(topComitter = true)
+          r.copy(topCommitter = true)
         } else {
           r
         })

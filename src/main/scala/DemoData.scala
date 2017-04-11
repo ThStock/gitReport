@@ -52,7 +52,7 @@ object DemoData {
       _changes = anonymChanges,
       branchNames = Seq("master"),
       _badges = Nil,
-      topComitter = true,
+      topCommitter = true,
       _sprintLengthInDays = sprintLengthInDays, participationPercentages = upAndDown()
     ))
 

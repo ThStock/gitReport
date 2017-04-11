@@ -123,7 +123,7 @@ object ChangeTypes {
                          participationPercentages:Seq[Int],
                          _badges:Seq[VisBadge],
                          _activity: Int = 0,
-                         topComitter: Boolean = false) extends VisibleRepoT {
+                         topCommitter: Boolean = false) extends VisibleRepoT {
     repoFullPath.getClass // XXX null check
 
     if (!repoFullPath.endsWith(repoName)) {

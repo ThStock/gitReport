@@ -255,7 +255,7 @@
                     <span class="activity-{{{activityIndex}}}"><span class="octicon octicon-pulse"></span> <span title="with / without review">{{^noGerrit}}{{{okChangesCount}}}/{{/noGerrit}}{{{allChangesCount}}}</span>
                     <span title="{{{branchNamesText}}}" {{^branchCountOk}}class="branch-too-mutch"{{/branchCountOk}}><span class="octicon octicon-git-branch"></span>{{{branchCount}}}</span>
                     <span title="changes per day and committer">{{{changesPerDay}}}<sub>dc<sub></span>
-                    <span class="{{#topComitter}}glow{{/topComitter}}" title="main committers based on SD">{{{mainComitters}}}<sub>mc<sub></span></span>
+                    <span class="{{#topCommitter}}glow{{/topCommitter}}" title="main committers based on SD">{{{mainCommitters}}}<sub>mc<sub></span></span>
             </div>
           </div>
           <div class="row">
