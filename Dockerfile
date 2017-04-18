@@ -7,7 +7,9 @@ RUN mkdir /srv/out && echo "Please wait..." > /srv/out/index.html && mkdir /srv/
 VOLUME /srv/src
 EXPOSE 80
 CMD [ "/srv/run.sh" ]
-COPY target/scala-2.11/git-report.jar /srv/git-report.jar
+COPY target/scala-2.12/git-report.jar /srv/git-report.jar
 
 # docker build -t thstock/gitreport:latest .
+# dir=(dirname $(pwd)) && docker run --name some-git-report -d -p80:80 -v $dir:/srv/src thstock/gitreport:latest
 # docker push thstock/gitreport
+
