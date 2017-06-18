@@ -1,4 +1,4 @@
-FROM java:8-jdk-alpine
+FROM openjdk:8u131-jre-alpine
 RUN apk update && apk add nginx && mkdir /run/nginx/
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY run.sh /srv/run.sh
@@ -10,6 +10,6 @@ CMD [ "/srv/run.sh" ]
 COPY target/scala-2.12/git-report.jar /srv/git-report.jar
 
 # docker build -t thstock/gitreport:latest .
-# dir=(dirname $(pwd)) && docker run --name some-git-report -d -p80:80 -v $dir:/srv/src thstock/gitreport:latest
+# dir=$(dirname $(pwd)) && docker run --name some-git-report -d -p80:80 -v $dir:/srv/src thstock/gitreport:latest
 # docker push thstock/gitreport
 
