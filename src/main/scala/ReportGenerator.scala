@@ -6,10 +6,9 @@ import java.util.Date
 import ChangeTypes._
 import ReportGenerator._
 import com.github.jknack.handlebars.{Handlebars, Helper, Options}
-import com.github.jknack.handlebars.helper.DefaultHelperRegistry
 
 import scala.beans.BeanProperty
-import scala.collection.{JavaConversions, JavaConverters}
+import scala.collection.JavaConversions
 
 class ReportGenerator(repos: Seq[VisibleRepoT]) {
 
@@ -92,7 +91,7 @@ class ReportGenerator(repos: Seq[VisibleRepoT]) {
           r
         })
 
-        val segments = ReportGenerator.slidingsOf(3) {
+        val segments = ReportGenerator.slidingsOf3 {
           markedTopComitter
             .sortBy(_.repoName)
             .sortBy(_.allChangesCount)
@@ -100,7 +99,7 @@ class ReportGenerator(repos: Seq[VisibleRepoT]) {
             .sortWith(_.percentageOk > _.percentageOk)
         }
 
-        val segemnts = Segmented(slots = Seq(Slot(segments(0)), Slot(segments(1)), Slot(segments(2))),
+        val segemnts = Segmented(slots = Seq(Slot(segments._1), Slot(segments._2), Slot(segments._3)),
           latestCommitDate = ReportGenerator.formatedDateByMillis(contentListed.map(_.commitTimeMillis).min),
           newestCommitDate = ReportGenerator.formatedDateByMillis(filterCommitDate),
           sprintLength = sprintLengthInDays)
@@ -201,6 +200,11 @@ object ReportGenerator {
     case e: Seq[_] ⇒ JavaConversions.asJavaCollection(e.map(toJavaTypes))
     case e: AnyRef if isCaseClass(e) ⇒ toJavaTypes(getCCParams(e) ++ getCCMethods(e))
     case _ => x;
+  }
+
+  def slidingsOf3[A](sortedIn: Seq[A]): (Seq[A], Seq[A], Seq[A]) = {
+    val result = slidingsOf(3)(sortedIn)
+    (result(0), result(1), result(2))
   }
 
   def slidingsOf[A](maxLength: Int)(sortedIn: Seq[A]): Seq[Seq[A]] = {

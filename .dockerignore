@@ -1,0 +1,13 @@
+.idea/
+.out/
+project/
+src/
+target/resolution-cache
+target/scala-2.11/
+target/scala-2.12/classes
+target/scala-2.12/test-classes
+target/scala-2.12/resolution-cache
+target/scala-2.13/
+target/streams
+target/test-reports
+.git/
