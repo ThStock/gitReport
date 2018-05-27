@@ -10,6 +10,8 @@ CMD [ "/srv/run.sh" ]
 COPY target/scala-2.12/git-report.jar /srv/git-report.jar
 
 # docker build -t thstock/gitreport:latest .
+# dir=$(pwd) && docker run --name some-git-report -d -p80:80 -v $dir:/srv/src thstock/gitreport:latest
 # dir=$(dirname $(pwd)) && docker run --name some-git-report -d -p80:80 -v $dir:/srv/src thstock/gitreport:latest
+# dir=$(cygpath -w $(pwd)) && docker run --name some-git-report -d -p80:80 -v $dir:/srv/src thstock/gitreport:latest
 # docker push thstock/gitreport
 

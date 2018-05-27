@@ -14,7 +14,7 @@ import org.eclipse.jgit.revwalk.filter.{AndRevFilter, CommitTimeRevFilter, RevFi
 import org.eclipse.jgit.storage.file._
 import resource._
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters
 import scala.collection.parallel.ParSeq
 
 class RepoAnalyzer(repo: File) {
@@ -28,7 +28,7 @@ class RepoAnalyzer(repo: File) {
   private val git = new Git(repository)
 
   private lazy val branchRefs: Seq[Ref] = {
-    git.branchList().call().filterNot(_.getName.contains("release"))
+    JavaConverters.asScalaBuffer(git.branchList().call()).filterNot(_.getName.contains("release"))
   }
 
   def branchNames(): Seq[String] = {
@@ -60,7 +60,7 @@ class RepoAnalyzer(repo: File) {
   private def toChange(config: RepoConfig, commit: RevCommit): Option[Change] = {
     val authIden = commit.getAuthorIdent
     val footerElements: Seq[FooterElement] = if (config.highlightGerritActivity) {
-      commit.getFooterLines.map(e => FooterElement(e.getKey, e.getValue)) ++ notesOf(commit)
+      JavaConverters.asScalaBuffer(commit.getFooterLines).map(e => FooterElement(e.getKey, e.getValue)) ++ notesOf(commit)
     } else {
       Nil
     }
